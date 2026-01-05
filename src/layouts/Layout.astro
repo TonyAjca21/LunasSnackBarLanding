@@ -1,3 +1,9 @@
+---
+import Header from "../components/Header.astro";
+import NavBar from "../components/NavBar.astro";
+import Footer from "../components/Footer.astro";
+---
+
 <!doctype html>
 <html lang="en">
 	<head>
@@ -6,16 +12,19 @@
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
 		<title>Lunas snack Bar</title>
-		<link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
+		<link
+			rel="stylesheet"
+			href="https://unpkg.com/swiper/swiper-bundle.min.css"
+		/>
 		<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
 	</head>
-	<body
-		class="min-h-screen bg-center bg-cover "
-		style="background-image: url('../../public/fondoLunas.png'); background-attachment: fixed;"
-	>
-		<div class="relative z-10">
+	<body>
+	
+		<NavBar />
+		<main>
 			<slot />
-		</div>
+		</main>
+     
 	</body>
 </html>
 
