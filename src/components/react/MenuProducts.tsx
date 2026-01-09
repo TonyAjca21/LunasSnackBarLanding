@@ -5,18 +5,12 @@ import { listMenu, type Menu } from "../../lib/data.ts";
 
 
 export function MenuProducts() {
-    const [isOpen, setIsOpen] = useState(false);
-    const [selectedId, setSelectedId] = useState<number | null>(null);
-    const [nameProduct, setNameProduct] = useState<string | null>(null);
-    const [priceProduct, setPriceProduct] = useState<string | null>(null);
-    const [photoProduct, setPhotoProduct] = useState<string>('');
-
+const [isOpen, setIsOpen] = useState(false);
+const [selectedMenu, setSelectedMenu] = useState<Menu | null>(null);
     const openModal = (product: Menu) => {
-        setSelectedId(product.id); // Guardamos el ID
-        setIsOpen(true);   // Abrimos el modal
-        setNameProduct(product.name);
-        setPriceProduct(product.price);
-        setPhotoProduct(product.photo);
+          // Guardamos el ID
+          setIsOpen(true);   // Abrimos el modal
+          setSelectedMenu(product);
     };
     return (
         <section id="menu" className="p-6 bg-zinc-900 rounded-xl shadow-xl">
@@ -62,10 +56,8 @@ export function MenuProducts() {
             <ModalProduct
                 isOpen={isOpen}
                 onClose={() => setIsOpen(false)}
-                productId={selectedId}
-                nameProduct={nameProduct}
-                priceProduct={priceProduct}
-                photoProduct={photoProduct}
+                 menu={selectedMenu}
+             
             />
         </section>
     );

@@ -15,7 +15,7 @@ export function EventsGalery() {
     slidesToShow: 3,
     slidesToScroll: 1,
     autoplay: true,
-    autoplaySpeed: 3000,
+    autoplaySpeed: 2500,
     prevArrow: <button className="slick-prev"><ChevronLeft /></button>,
     nextArrow: <button className="slick-next"><ChevronRight /></button>,
     responsive: [
