@@ -1,14 +1,25 @@
 ---
-title: Admin
+import Layout from "../layouts/Layout.astro";
+import "../styles/global.css";
+import LoginAdmin from "../components/admin/loginAdmin.tsx";
 ---
 
-<html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Admin</title>
-  </head>
-  <body class="bg-gray-900 text-white min-h-screen p-6">
-    <h1 class="text-3xl font-bold mb-4">¡Página Admin cargó correctamente!</h1>
-    <p>Aquí puedes agregar eventos o fotos.</p>
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Lunas snack Bar</title>
+		<link
+			rel="stylesheet"
+			href="https://unpkg.com/swiper/swiper-bundle.min.css"
+		/>
+		<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+	</head>
+	
+  <body>
+    <LoginAdmin client:load />
   </body>
 </html>

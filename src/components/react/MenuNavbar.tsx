@@ -11,7 +11,9 @@ export function MenuNavbar() {
     { label: 'Cómo Funciona', href: '#como-funciona' },
     { label: 'Contacto', href: '#contacto' },
   ];
-
+ if (typeof document === 'undefined') {
+    return null; // or a loading indicator
+  }
   const scrollToSection = (href: string) => {
     const element = document.querySelector(href);
     if (element) {

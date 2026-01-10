@@ -10,7 +10,7 @@ export interface Menu {
   eventos: string[];
   cantidadPerosonas: number;
   anticipacion: string;
-
+  estado?:boolean;
 }
 
 
