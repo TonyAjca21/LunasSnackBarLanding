@@ -115,10 +115,10 @@ export interface eventoDetalle {
   url: string;
 }
 export const galeriesImages: Eventos[] = [
-  { id: "", url: '../../public/fondoLunas.png' },
-  { id: "2", url: '../../public/ImagendePruebaComida.jpg' },
-  { id: "3", url: '../../public/ImagenPrueba.jpg' },
-  { id: "4", url: '../../public/images.jfif' },
+  { id: "", url: 'fondoLunas.png' },
+  { id: "2", url: 'ImagendePruebaComida.jpg' },
+  { id: "3", url: 'ImagenPrueba.jpg' },
+  { id: "4", url: 'images.jfif' },
 ];
 
 
