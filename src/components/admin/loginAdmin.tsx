@@ -3,7 +3,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../lib/firebase";
 
 
-export default function loginAdmin() {
+export function LoginAdmin() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -16,7 +16,7 @@ export default function loginAdmin() {
 
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            window.location.href = "/admin/dashboard";
+          
         } catch (err) {
             setError("Correo o contraseña incorrectos");
         } finally {

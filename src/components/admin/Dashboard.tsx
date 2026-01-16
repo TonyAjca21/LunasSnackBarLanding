@@ -2,26 +2,27 @@ import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import type { User } from "firebase/auth";
 import { auth } from "../../lib/firebase";
-import { Plus, Moon, Calendar as CalendarIcon, Package,LogOut } from 'lucide-react';
+import { Plus, Moon, Calendar as CalendarIcon, Package, LogOut } from 'lucide-react';
 import type { Menu } from "../../lib/data";
 import { EventCard } from "./EventsCard";
 import { ServiceCard } from "./ServiceCard";
 type Tab = 'events' | 'services';
-import type { Event } from "./EventForm";
+import type { Eventos } from '../../lib/data';
 import { Modal } from "./modal";
 import { EventForm } from "./EventForm";
 import { ServiceForm } from "./ServiceForm";
-export  function Dashboards() {
+import { uploadImage , saveEvent} from "../../services/storage.services";
+export function Dashboards() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>('events');
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<Eventos[]>([]);
   const [services, setServices] = useState<Menu[]>([]);
-  
+
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
-  
-  const [editingEvent, setEditingEvent] = useState<Event | undefined>();
+
+  const [editingEvent, setEditingEvent] = useState<Eventos | undefined>();
   const [editingService, setEditingService] = useState<Menu | undefined>();
   // Verificar si el usuario está logueado
   useEffect(() => {
@@ -47,23 +48,33 @@ export  function Dashboards() {
     return <p className="text-center mt-20">Cargando...</p>;
   }
 
-  const handleAddEvent = (eventData: Omit<Event, 'id'>) => {
-    if (editingEvent) {
-      setEvents(events.map(e => 
-        e.id === editingEvent.id ? { ...eventData, id: editingEvent.id } : e
-      ));
-      setEditingEvent(undefined);
-    } else {
-      const newEvent: Event = {
-        ...eventData,
-        id: Date.now().toString(),
-      };
-      setEvents([...events, newEvent]);
-    }
-    setIsEventModalOpen(false);
+  
+
+const handleAddEvent = async (data: Omit<Eventos, "id"> & { imageFile?: File }) => {
+  let imageUrl = data.image || "";
+
+  // Subir imagen a Storage si hay archivo
+  if (data.imageFile) {
+    imageUrl = await uploadImage(data.imageFile);
+  }
+
+  const newEvent: Eventos = {
+    id: Date.now().toString(),
+    nombre: data.nombre,
+    descripcion: data.descripcion,
+    fechaevento: data.fechaevento,
+    ubicacion: data.ubicacion,
+    image: imageUrl,
+    url: data.url || "",
+    galeria: data.galeria || [],
   };
 
-  const handleEditEvent = (event: Event) => {
+  setEvents((prev) => [...prev, newEvent]); // guardamos en estado
+  setIsEventModalOpen(false);
+};
+
+
+  const handleEditEvent = (event: Eventos) => {
     setEditingEvent(event);
     setIsEventModalOpen(true);
   };
@@ -77,7 +88,7 @@ export  function Dashboards() {
   // Service handlers
   const handleAddService = (serviceData: Omit<Menu, 'id'>) => {
     if (editingService) {
-      setServices(services.map(s => 
+      setServices(services.map(s =>
         s.id === editingService.id ? { ...serviceData, id: editingService.id } : s
       ));
       setEditingService(undefined);
@@ -108,7 +119,7 @@ export  function Dashboards() {
     setEditingEvent(undefined);
     setEditingService(undefined);
   };
-    return (
+  return (
     <div className="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-indigo-950">
       {/* Header */}
       <header className="bg-slate-900/50 backdrop-blur-lg border-b border-slate-800 sticky top-0 z-40">
@@ -123,7 +134,7 @@ export  function Dashboards() {
                 <p className="text-slate-400 text-sm">Panel de Administración</p>
               </div>
             </div>
-              <button
+            <button
               onClick={handleLogout}
               className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors shadow-lg shadow-red-500/20"
             >
@@ -139,22 +150,20 @@ export  function Dashboards() {
         <div className="flex gap-4 mb-8">
           <button
             onClick={() => setActiveTab('events')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
-              activeTab === 'events'
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${activeTab === 'events'
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
                 : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
-            }`}
+              }`}
           >
             <CalendarIcon className="w-5 h-5" />
             Eventos
           </button>
           <button
             onClick={() => setActiveTab('services')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
-              activeTab === 'services'
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${activeTab === 'services'
                 ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30'
                 : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
-            }`}
+              }`}
           >
             <Package className="w-5 h-5" />
             Servicios
@@ -237,7 +246,7 @@ export  function Dashboards() {
           </div>
         )}
       </div>
-  <Modal
+      <Modal
         isOpen={isEventModalOpen}
         onClose={closeModals}
         title={editingEvent ? 'Editar Evento' : 'Nuevo Evento'}
@@ -260,7 +269,7 @@ export  function Dashboards() {
           onCancel={closeModals}
         />
       </Modal>
-    
+
     </div>
   );
 }

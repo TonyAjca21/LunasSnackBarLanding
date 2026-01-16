@@ -15,7 +15,7 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
     name: service?.name || '',
     description: service?.descriptionProduct || '',
     price: service?.price || '',
-   caracteristicas: service?.caracteristicas || 'bebidas',
+   caracteristicas: service?.caracteristicas || '',
     image: service?.photo || '',
     available: service?.estado ?? true,
   });

@@ -5,6 +5,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { galeriesImages } from "../../lib/data";
+import type { Eventos } from "../../lib/data";
 
 export function EventsGalery() {
 
@@ -54,9 +55,12 @@ export function EventsGalery() {
                 <div key={index} className="px-2">
                   <div className="relative h-80 rounded-lg overflow-hidden">
                     <img
-                      src={image}
+                      src={image.url}
                       alt={`Evento ${index + 1}`}
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      onClick={()=>{
+                        window.location.href = `/eventos/${image.id}`;
+                      }}
                     />
                   </div>
                 </div>

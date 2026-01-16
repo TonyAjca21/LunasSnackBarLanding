@@ -1,7 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import "../styles/global.css";
-import LoginAdmin from "../components/admin/loginAdmin.tsx";
+import AdminEntry from "../components/admin/adminEntry";
 ---
 
 <!doctype html>
@@ -20,6 +20,6 @@ import LoginAdmin from "../components/admin/loginAdmin.tsx";
 	</head>
 	
   <body>
-    <LoginAdmin client:load />
+    <AdminEntry  client:load/>
   </body>
 </html>

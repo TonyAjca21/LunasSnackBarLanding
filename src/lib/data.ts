@@ -99,14 +99,27 @@ export const listMenu: Menu[] = [
   }
 ];
 
+export interface Eventos {
+  id:  string ;
+  image?: string;
+  url: string;
+  nombre?: string;
+  ubicacion?: string;
+  descripcion?: string;
+  fechaevento?: string;
+  galeria?: eventoDetalle[];
+}
 
-export const galeriesImages: string[] = [
-  '../../public/fondoLunas.png',
-  '../../public/ImagendePruebaComida.jpg',
-  '../../public/ImagenPrueba.jpg',
-  '../../public/images.jfif',
-
-]
+export interface eventoDetalle {
+  id: number;
+  url: string;
+}
+export const galeriesImages: Eventos[] = [
+  { id: "", url: '../../public/fondoLunas.png' },
+  { id: "2", url: '../../public/ImagendePruebaComida.jpg' },
+  { id: "3", url: '../../public/ImagenPrueba.jpg' },
+  { id: "4", url: '../../public/images.jfif' },
+];
 
 
 export const howitworksSteps: HowItWorksStep[] = [

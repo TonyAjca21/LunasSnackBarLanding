@@ -1,56 +1,57 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, Upload, X } from 'lucide-react';
+import type { Eventos } from '../../lib/data';
 
-export interface Event {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  time: string;
-  location: string;
-  image: string;
-}
+
 
 interface EventFormProps {
-  event?: Event;
-  onSubmit: (event: Omit<Event, 'id'>) => void;
+  event?: Eventos;
+  onSubmit: (data: Omit<Eventos, "id"> & { imageFile?: File }) => void; // incluye File opcional
   onCancel: () => void;
 }
 
+
 export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
-  const [formData, setFormData] = useState({
-    title: event?.title || '',
-    description: event?.description || '',
-    date: event?.date || '',
-    time: event?.time || '',
-    location: event?.location || '',
-    image: event?.image || '',
-  });
+ const [formData, setFormData] = useState<Omit<Eventos, "id"> & { imageFile?: File }>({
+  nombre: event?.nombre || "",
+  descripcion: event?.descripcion || "",
+  fechaevento: event?.fechaevento || "",
+  ubicacion: event?.ubicacion || "",
+  image: event?.image || "",
+  url: event?.url || "",
+  galeria: event?.galeria || [],
+  imageFile: undefined,
+});
 
   const [imagePreview, setImagePreview] = useState(event?.image || '');
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setImagePreview(result);
-        setFormData({ ...formData, image: result });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
+const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (file) {
+    setFormData({ ...formData, imageFile: file }); // Guardamos el File
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
+  }
+};
   const removeImage = () => {
     setImagePreview('');
     setFormData({ ...formData, image: '' });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
+ const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+  onSubmit({
+    nombre: formData.nombre,
+    descripcion: formData.descripcion,
+    fechaevento: formData.fechaevento,
+    ubicacion: formData.ubicacion,
+    image: formData.image,     // puede ser base64 mientras no haya file
+    url: formData.url || '',
+    galeria: formData.galeria || [],
+    imageFile: formData.imageFile, // aquí está el archivo real
+  });
+};
+
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -60,8 +61,8 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
         </label>
         <input
           type="text"
-          value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          value={formData.nombre}
+          onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
           className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           placeholder="Ej: Noche de Luna Llena"
           required
@@ -73,8 +74,8 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
           Descripción
         </label>
         <textarea
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          value={formData.descripcion}
+          onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
           rows={4}
           className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
           placeholder="Describe el evento..."
@@ -90,26 +91,14 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
           </label>
           <input
             type="date"
-            value={formData.date}
-            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+            value={formData.fechaevento}
+            onChange={(e) => setFormData({ ...formData, fechaevento: e.target.value })}
             className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             required
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
-            <Clock className="inline w-4 h-4 mr-1" />
-            Hora
-          </label>
-          <input
-            type="time"
-            value={formData.time}
-            onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-            className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            required
-          />
-        </div>
+        
       </div>
 
       <div>
@@ -119,8 +108,8 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
         </label>
         <input
           type="text"
-          value={formData.location}
-          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+          value={formData.ubicacion}
+          onChange={(e) => setFormData({ ...formData, ubicacion: e.target.value })}
           className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           placeholder="Ej: Lunas Snack Bar"
           required

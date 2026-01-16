@@ -1,0 +1,47 @@
+---
+export async function getStaticPaths() {
+  // Puede venir de una API o Firebase
+  const eventos = [
+    { id: 1 },
+    { id: 2  },
+    { id: 3 },
+  ];
+
+  return eventos.map(evento => ({
+    params: { id: evento.id },
+  }));
+}
+
+const { id } = Astro.params;
+
+// Simulación de datos
+const eventosDetalle = [
+  { id: 1, titulo: 'Evento Familiar', descripcion: 'Para 50 personas' },
+  { id: 2, titulo: 'Evento Empresarial', descripcion: 'Corporativo' },
+  { id: 3, titulo: 'Boda', descripcion: 'Evento especial' },
+];
+
+const evento = eventosDetalle.find(e => e.id === id);
+---
+
+<section class="bg-gray-950 min-h-screen text-white p-8">
+  {evento ? (
+    <>
+      <h1 class="text-4xl font-bold">{evento.titulo}</h1>
+      <p class="mt-4">{evento.descripcion}</p>
+    </>
+  ) : (
+    <p>Evento no encontrado</p>
+  )}
+</section>
+
+<section class="bg-gray-950 min-h-screen text-white p-8">
+  {evento ? (
+    <>
+      <h1 class="text-4xl font-bold mb-4">{evento.titulo}</h1>
+      <p class="text-lg">{evento.descripcion}</p>
+    </>
+  ) : (
+    <p>Evento no encontrado</p>
+  )}
+</section>
