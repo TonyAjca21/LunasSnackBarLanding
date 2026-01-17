@@ -19,7 +19,7 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
   ubicacion: event?.ubicacion || "",
   image: event?.image || "",
   url: event?.url || "",
-  galeria: event?.galeria || [],
+  imagePath: event?.imagePath || "",
   imageFile: undefined,
 });
 
@@ -38,19 +38,24 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, image: '' });
   };
 
- const handleSubmit = (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
-  onSubmit({
+ console.log("Form submit iniciado");
+  // Solo enviar data sin imageFile
+  await onSubmit({
     nombre: formData.nombre,
     descripcion: formData.descripcion,
     fechaevento: formData.fechaevento,
     ubicacion: formData.ubicacion,
-    image: formData.image,     // puede ser base64 mientras no haya file
-    url: formData.url || '',
-    galeria: formData.galeria || [],
-    imageFile: formData.imageFile, // aquí está el archivo real
+    imageFile: formData.imageFile, 
+    url: formData.url || "",
+      image: imagePreview,   
+      imagePath: formData.imagePath,
+  
   });
 };
+
+
 
 
   return (

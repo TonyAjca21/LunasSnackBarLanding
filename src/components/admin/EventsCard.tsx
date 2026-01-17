@@ -4,16 +4,16 @@ import type { Eventos } from '../../lib/data';
 interface EventCardProps {
   event: Eventos;
   onEdit: (event: Eventos) => void;
-  onDelete: (id: string) => void;
+  onDelete: (event: Eventos) => void;
 }
 
 export function EventCard({ event, onEdit, onDelete }: EventCardProps) {
   return (
     <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-xl overflow-hidden shadow-lg border border-slate-700/50 hover:border-indigo-500/50 transition-all duration-300 hover:shadow-indigo-500/20 hover:shadow-xl group">
-      {event.galeria && (
+      {event.image && (
         <div className="relative h-48 overflow-hidden">
           <img
-            src={event.image || event.galeria[0].url}
+            src={event.image }
             alt={event.nombre}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
@@ -45,7 +45,7 @@ export function EventCard({ event, onEdit, onDelete }: EventCardProps) {
             Editar
           </button>
           <button
-            onClick={() => onDelete(event.id)}
+            onClick={() => onDelete(event)}
             className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
           >
             <Trash2 className="w-4 h-4" />

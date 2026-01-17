@@ -1,4 +1,4 @@
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage } from '../lib/firebase';
 import { collection, addDoc } from "firebase/firestore";
 import type { Eventos } from '../lib/data';
@@ -9,24 +9,36 @@ export const uploadImage = async (file: File, folder = "eventos") => {
   const safeFileName = file.name.replace(/[^\w.-]/g, "_");
   const filePath = `${folder}/${Date.now()}-${safeFileName}`;
   const storageRef = ref(storage, filePath);
-console.log('Uploading file to path:', filePath);
-console.log('File details:', file);
-console.log('Storage reference:', storageRef);
+
   // Subimos la imagen
-  const snapshot = await uploadBytes(storageRef, file);
-console.log('Uploaded a blob or file!', snapshot);
+  await uploadBytes(storageRef, file);
+
   // Obtenemos URL pública
-  const url = await getDownloadURL(snapshot.ref);
-  console.log('File available at', url);
-  return url;
+  const url = await getDownloadURL(storageRef);
+
+  return { url, path: filePath }; // <-- ⚡ devuelve ambos
 };
 
-export const saveEvent = async (data: Omit<Eventos, "imageFile"> & { image?: string }) => {
-  const docRef = await addDoc(collection(db, "eventos"), data);
+export const saveEvent = async (data: Omit<Eventos, "id">) => {
+  const docRef = await addDoc(collection(db, "eventos"), {
+    ...data,
+    createdAt: new Date(),
+  });
+
   return docRef.id;
 };
+export const deleteImage = async (path: string) => {
+  try {
+    if (!path) return;
+    const imageRef = ref(storage, path);
+    await deleteObject(imageRef);
+    console.log("Imagen eliminada:", path);
+  } catch (error) {
+    console.error("Error eliminando imagen:", error);
+  }
+};
 
-export const uploadImageToCloudinary = async (file: File): Promise<string> => {
+/*export const uploadImageToCloudinary = async (file: File): Promise<string> => {
   const url = `https://api.cloudinary.com/v1_1/dntvpepwa/upload`;
   const formData = new FormData();
   formData.append("file", file);
@@ -43,4 +55,4 @@ export const uploadImageToCloudinary = async (file: File): Promise<string> => {
 
   const data = await response.json();
   return data.secure_url; // Esta es la URL pública que puedes guardar en Firestore
-};
+};*/

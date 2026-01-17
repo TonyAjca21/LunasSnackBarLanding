@@ -11,7 +11,11 @@ import type { Eventos } from '../../lib/data';
 import { Modal } from "./modal";
 import { EventForm } from "./EventForm";
 import { ServiceForm } from "./ServiceForm";
-import { uploadImage , saveEvent} from "../../services/storage.services";
+import { uploadImage, saveEvent, deleteImage } from "../../services/storage.services.ts";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../lib/firebase";
+import { onSnapshot } from "firebase/firestore";
+import { deleteDoc, doc, updateDoc } from "firebase/firestore";
 export function Dashboards() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,18 +30,35 @@ export function Dashboards() {
   const [editingService, setEditingService] = useState<Menu | undefined>();
   // Verificar si el usuario está logueado
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    // 1️⃣ Escuchar autenticación
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       if (!currentUser) {
-        // No logueado → redirige al login
-        window.location.href = "/admin";
+        window.location.href = "/admin"; // redirigir si no está logueado
       } else {
         setUser(currentUser);
         setLoading(false);
       }
     });
 
-    return () => unsubscribe();
-  }, []);
+    return () => unsubscribeAuth(); // cleanup de auth
+  }, []); // solo al montar
+
+  useEffect(() => {
+    // 2️⃣ Traer eventos desde Firestore **solo si hay usuario**
+    if (!user) return;
+
+    const eventsRef = collection(db, "eventos");
+    const unsubscribeEvents = onSnapshot(eventsRef, (snapshot) => {
+      const fetchedEvents = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Eventos, "id">)
+      }));
+      console.log("Eventos traídos:", fetchedEvents); // depuración
+      setEvents(fetchedEvents);
+    });
+
+    return () => unsubscribeEvents(); // cleanup de snapshot
+  }, [user]); // se ejecuta cuando 'user' cambia
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -48,42 +69,125 @@ export function Dashboards() {
     return <p className="text-center mt-20">Cargando...</p>;
   }
 
-  
 
-const handleAddEvent = async (data: Omit<Eventos, "id"> & { imageFile?: File }) => {
-  let imageUrl = data.image || "";
 
-  // Subir imagen a Storage si hay archivo
-  if (data.imageFile) {
-    imageUrl = await uploadImage(data.imageFile);
-  }
+  const handleAddEvent = async (data: Omit<Eventos, "id"> & { imageFile?: File }) => {
+    try {
+      console.log("handleAddEvent llamado con:", data);
 
-  const newEvent: Eventos = {
-    id: Date.now().toString(),
-    nombre: data.nombre,
-    descripcion: data.descripcion,
-    fechaevento: data.fechaevento,
-    ubicacion: data.ubicacion,
-    image: imageUrl,
-    url: data.url || "",
-    galeria: data.galeria || [],
+      let uploadedImage = data.imageFile ? await uploadImage(data.imageFile) : { url: "", path: "" };
+
+      const eventData = {
+        nombre: data.nombre,
+        descripcion: data.descripcion,
+        fechaevento: data.fechaevento,
+        ubicacion: data.ubicacion,
+        image: uploadedImage.url,      // URL para mostrar
+        imagePath: uploadedImage.path, // path para eliminar luego
+        url: data.url || "",
+      };
+
+      console.log("Guardando evento:", eventData);
+
+      // Guardar en Firestore
+      const docRef = await saveEvent(eventData);
+
+
+
+      // Cerrar modal
+      closeModals();
+
+      console.log("Evento guardado correctamente y modal cerrado");
+
+    } catch (error) {
+      console.error("Error al guardar evento:", error);
+      alert("Error al guardar el evento");
+    }
   };
-
-  setEvents((prev) => [...prev, newEvent]); // guardamos en estado
-  setIsEventModalOpen(false);
-};
 
 
   const handleEditEvent = (event: Eventos) => {
     setEditingEvent(event);
     setIsEventModalOpen(true);
   };
+  const handleDeleteEvent = async (event: Eventos) => {
+    if (!confirm("¿Seguro que quieres eliminar este evento?")) return;
 
-  const handleDeleteEvent = (id: string) => {
-    if (confirm('¿Estás seguro de que quieres eliminar este evento?')) {
-      setEvents(events.filter(e => e.id !== id));
+    try {
+      // Eliminar imagen si existe
+      if (event.image) {
+        await deleteImage(event.image);
+      }
+
+      // Eliminar documento de Firestore
+      await deleteDoc(doc(db, "eventos", event.id));
+
+      alert("Evento eliminado correctamente");
+    } catch (error) {
+      console.error("Error al eliminar evento:", error);
+      alert("No se pudo eliminar el evento");
     }
   };
+
+
+  const handleFormSubmit = async (data: Omit<Eventos, "id"> & { imageFile?: File }) => {
+    if (editingEvent) {
+      // Editar evento
+      await handleUpdateEvent({ ...data, id: editingEvent.id, image: data.image });
+    } else {
+      // Crear nuevo evento
+      await handleAddEvent(data);
+    }
+  };
+  const handleUpdateEvent = async (updatedEvent: Omit<Eventos, "id"> & { id: string; imageFile?: File; imagePath?: string }) => {
+    try {
+      let imageUrl = updatedEvent.image || "";       // URL existente
+      let imagePath = updatedEvent.imagePath || "";  // Path existente
+
+      if (updatedEvent.imageFile) {
+        // Si hay imagen anterior, eliminarla
+        if (imagePath) {
+          console.log("Eliminando imagen anterior:", imagePath);
+          await deleteImage(imagePath);
+        }
+
+        // Subir nueva imagen
+        const uploadedImage = await uploadImage(updatedEvent.imageFile);
+        imageUrl = uploadedImage.url;
+        imagePath = uploadedImage.path;
+      }
+
+      // Actualizar Firestore
+      const eventRef = doc(db, "eventos", updatedEvent.id);
+      await updateDoc(eventRef, {
+        nombre: updatedEvent.nombre,
+        descripcion: updatedEvent.descripcion,
+        fechaevento: updatedEvent.fechaevento,
+        ubicacion: updatedEvent.ubicacion,
+        image: imageUrl,
+        imagePath: imagePath,
+        url: updatedEvent.url || "",
+      });
+
+      // Actualizar UI
+      setEvents(prev =>
+        prev.map(e =>
+          e.id === updatedEvent.id
+            ? { ...updatedEvent, image: imageUrl, imagePath } // actualizamos URL y path
+            : e
+        )
+      );
+
+      setIsEventModalOpen(false);
+      setEditingEvent(undefined);
+
+      alert("Evento actualizado correctamente");
+    } catch (error) {
+      console.error("Error al actualizar evento:", error);
+      alert("No se pudo actualizar el evento");
+    }
+  };
+
 
   // Service handlers
   const handleAddService = (serviceData: Omit<Menu, 'id'>) => {
@@ -151,8 +255,8 @@ const handleAddEvent = async (data: Omit<Eventos, "id"> & { imageFile?: File }) 
           <button
             onClick={() => setActiveTab('events')}
             className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${activeTab === 'events'
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
-                : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+              : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
               }`}
           >
             <CalendarIcon className="w-5 h-5" />
@@ -161,8 +265,8 @@ const handleAddEvent = async (data: Omit<Eventos, "id"> & { imageFile?: File }) 
           <button
             onClick={() => setActiveTab('services')}
             className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${activeTab === 'services'
-                ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30'
-                : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
+              ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30'
+              : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
               }`}
           >
             <Package className="w-5 h-5" />
@@ -247,17 +351,17 @@ const handleAddEvent = async (data: Omit<Eventos, "id"> & { imageFile?: File }) 
         )}
       </div>
       <Modal
+        key={isEventModalOpen ? "open" : "closed"} // fuerza re-render
         isOpen={isEventModalOpen}
         onClose={closeModals}
         title={editingEvent ? 'Editar Evento' : 'Nuevo Evento'}
       >
         <EventForm
           event={editingEvent}
-          onSubmit={handleAddEvent}
+          onSubmit={handleFormSubmit}
           onCancel={closeModals}
         />
       </Modal>
-
       <Modal
         isOpen={isServiceModalOpen}
         onClose={closeModals}

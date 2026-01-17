@@ -1,18 +1,19 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+
 const firebaseConfig = {
   apiKey: "AIzaSyBLHkUNwVE3JYdRdtihYp1iSJQcpaKFMog",
   authDomain: "lunas-snack-bar.firebaseapp.com",
   projectId: "lunas-snack-bar",
   appId: "1:652966154220:web:95203befeb9947579c3ac9",
-  storageBucket: "lunas-snack-bar.appspot.com",
+  storageBucket: "lunas-snack-bar.firebasestorage.app",
 };
 
-const app = initializeApp(firebaseConfig);
+// ✅ evita duplicar la app
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+
 export const auth = getAuth(app);
-
 export const db = getFirestore(app);
-
-export const storage = getStorage(app); 
+export const storage = getStorage(app);

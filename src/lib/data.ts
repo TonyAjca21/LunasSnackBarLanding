@@ -104,10 +104,11 @@ export interface Eventos {
   image?: string;
   url: string;
   nombre?: string;
+    imagePath?: string; 
   ubicacion?: string;
   descripcion?: string;
   fechaevento?: string;
-  galeria?: eventoDetalle[];
+
 }
 
 export interface eventoDetalle {
