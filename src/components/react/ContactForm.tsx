@@ -35,17 +35,25 @@ export function ContactForm() {
 
                     {/* Llamar */}
                     <a
-                        href="https://wa.me/99268791"
+                        href="https://instagram.com/lunassnackbar"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex gap-2 bg-amber-900 hover:bg-amber-950 text-white font-bold py-3 px-8 rounded-md sm:rounded-full transition-colors"
+                        className="
+  inline-flex gap-2
+  bg-linear-to-r from-purple-500 via-pink-500 to-orange-400
+  hover:from-purple-600 hover:via-pink-600 hover:to-orange-500
+  text-white font-bold
+  py-3 px-8
+  rounded-md sm:rounded-full
+  transition-colors
+"
                     >
-                        <Phone className="w-5 h-5" />
-                        Llamar
+                        <Instagram className="w-8 h-8" />
+                        Instagram
                     </a>
                 </div>
 
-                <div className="flex flex-row justify-center items-center gap-4 mt-4">
+                {/* Redes sociales 
                     <a
                         href="https://instagram.com/lunassnackbar"
                         target="_blank"
@@ -64,7 +72,7 @@ export function ContactForm() {
                         <Facebook className="w-8 h-8" />
                     </a>
                 </div>
-
+*/}
 
             </div>
         </section>

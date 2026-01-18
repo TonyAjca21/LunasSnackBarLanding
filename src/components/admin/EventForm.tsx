@@ -21,6 +21,7 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
   url: event?.url || "",
   imagePath: event?.imagePath || "",
   imageFile: undefined,
+  estado: event?.estado ?? true,
 });
 
   const [imagePreview, setImagePreview] = useState(event?.image || '');
@@ -51,6 +52,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     url: formData.url || "",
       image: imagePreview,   
       imagePath: formData.imagePath,
+      estado: formData.estado,
   
   });
 };
@@ -95,18 +97,14 @@ const handleSubmit = async (e: React.FormEvent) => {
             Fecha
           </label>
           <input
-            type="date"
+            type="text"
             value={formData.fechaevento}
             onChange={(e) => setFormData({ ...formData, fechaevento: e.target.value })}
             className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             required
           />
         </div>
-
-        
-      </div>
-
-      <div>
+            <div>
         <label className="block text-sm font-medium text-slate-300 mb-2">
           <MapPin className="inline w-4 h-4 mr-1" />
           Ubicación
@@ -119,6 +117,22 @@ const handleSubmit = async (e: React.FormEvent) => {
           placeholder="Ej: Lunas Snack Bar"
           required
         />
+      </div>
+        
+      </div>
+
+  
+    <div className="flex items-center gap-3">
+        <input
+          type="checkbox"
+          id="available"
+          checked={formData.estado}
+          onChange={(e) => setFormData({ ...formData, estado: e.target.checked })}
+          className="w-5 h-5 rounded bg-slate-800/50 border-slate-700 text-purple-600 focus:ring-2 focus:ring-purple-500"
+        />
+        <label htmlFor="available" className="text-sm font-medium text-slate-300">
+          Disponible
+        </label>
       </div>
 
       <div>

@@ -1,9 +1,10 @@
 import React from "react";
-import { type Menu } from "../../lib/data.ts";
+import { type Servicios } from "../../lib/data.ts";
+import { MessageCircle } from "lucide-react";
 interface ModalProductProps {
   isOpen: boolean;
   onClose: () => void;
-  menu: Menu | null;
+  menu: Servicios | null;
 }
 
 const ModalProducts: React.FC<ModalProductProps> = ({ isOpen, onClose, menu }) => {
@@ -11,17 +12,17 @@ const ModalProducts: React.FC<ModalProductProps> = ({ isOpen, onClose, menu }) =
 
   return (
     <section className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
-  
-    <div className="rounded-lg max-w-2xl w-full p-6 shadow-lg relative max-h-[90vh] overflow-y-auto bg-gray-900">
 
-  {/* Botón de eliminar en la esquina superior derecha */}
-  <button 
-    onClick={onClose} 
-    className="absolute top-2 right-2 text-red-500 hover:text-red-700 bg-gray-800 rounded-full w-10 h-10 flex items-center justify-center shadow-md"
-  >
-    <span className="text-xl">x</span>
-  </button>
-        <img src={menu?.photo} alt="foto Producto" className="w-full h-60 object-cover rounded-lg" />
+      <div className="rounded-lg max-w-2xl w-full p-6 shadow-lg relative max-h-[90vh] overflow-y-auto bg-gray-900">
+
+        {/* Botón de eliminar en la esquina superior derecha */}
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-red-500 hover:text-red-700 bg-gray-800 rounded-full w-10 h-10 flex items-center justify-center shadow-md"
+        >
+          <span className="text-xl">x</span>
+        </button>
+        <img src={menu?.image} alt="foto Producto" className="w-full h-60 object-cover rounded-lg" />
         <div className="grid grid-cols-1 md:grid-cols-[1fr_2px_1fr] gap-6 mt-6 text-white">
 
           {/* COLUMNA IZQUIERDA */}
@@ -47,12 +48,12 @@ const ModalProducts: React.FC<ModalProductProps> = ({ isOpen, onClose, menu }) =
               <span>👥</span>
               <p>Rinde para {menu?.cantidadPerosonas} personas</p>
             </div>
-          <div className="bg-gray-400 w-full h-px"></div>
+            <div className="bg-gray-400 w-full h-px"></div>
             <div className="flex items-center gap-2">
               <span>⏰</span>
               <p className="">Anticipación: {menu?.anticipacion}</p>
             </div>
-    <div className="bg-gray-400 w-full h-px"></div>
+            <div className="bg-gray-400 w-full h-px"></div>
             <div>
               <p className="mb-1">Eventos ideales para:</p>
               <ul className="space-y-1">
@@ -65,11 +66,25 @@ const ModalProducts: React.FC<ModalProductProps> = ({ isOpen, onClose, menu }) =
             </div>
           </div>
 
+
+        </div>
+
+        <div className="mt-6 flex justify-center">
+          <a
+            href="https://wa.me/99268791"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full shadow-md transition-all transform hover:scale-105"
+          >
+            <MessageCircle className="w-5 h-5" />
+            Cotizar WhatsApp
+          </a>
         </div>
 
 
-
       </div>
+
+
     </section>
 
 

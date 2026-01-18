@@ -3,7 +3,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import type { User } from "firebase/auth";
 import { auth } from "../../lib/firebase";
 import { Plus, Moon, Calendar as CalendarIcon, Package, LogOut } from 'lucide-react';
-import type { Menu } from "../../lib/data";
+import type { Servicios} from "../../lib/data";
 import { EventCard } from "./EventsCard";
 import { ServiceCard } from "./ServiceCard";
 type Tab = 'events' | 'services';
@@ -11,7 +11,7 @@ import type { Eventos } from '../../lib/data';
 import { Modal } from "./modal";
 import { EventForm } from "./EventForm";
 import { ServiceForm } from "./ServiceForm";
-import { uploadImage, saveEvent, deleteImage } from "../../services/storage.services.ts";
+import { uploadImage, saveEvent, deleteImage, uploadImageService, saveService } from "../../services/storage.services.ts";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { onSnapshot } from "firebase/firestore";
@@ -21,13 +21,13 @@ export function Dashboards() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>('events');
   const [events, setEvents] = useState<Eventos[]>([]);
-  const [services, setServices] = useState<Menu[]>([]);
+  const [services, setServices] = useState<Servicios[]>([]);
 
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
 
   const [editingEvent, setEditingEvent] = useState<Eventos | undefined>();
-  const [editingService, setEditingService] = useState<Menu | undefined>();
+  const [editingService, setEditingService] = useState<Servicios | undefined>();
   // Verificar si el usuario está logueado
   useEffect(() => {
     // 1️⃣ Escuchar autenticación
@@ -60,6 +60,24 @@ export function Dashboards() {
     return () => unsubscribeEvents(); // cleanup de snapshot
   }, [user]); // se ejecuta cuando 'user' cambia
 
+
+  useEffect(() => {
+    if (!user) return;
+
+    const servicesRef = collection(db, "Servicios");
+    const unsubscribeServices = onSnapshot(servicesRef, (snapshot) => {
+      const fetchedServices = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Servicios, "id">)
+      }));
+      console.log("Servicios traídos:", fetchedServices);
+      setServices(fetchedServices);
+    });
+
+    return () => unsubscribeServices(); // cleanup de snapshot
+  }, [user]); // se ejecuta cuando 'user' cambia
+
+
   const handleLogout = async () => {
     await signOut(auth);
     window.location.href = "/admin";
@@ -85,15 +103,10 @@ export function Dashboards() {
         image: uploadedImage.url,      // URL para mostrar
         imagePath: uploadedImage.path, // path para eliminar luego
         url: data.url || "",
+        estado: data.estado,
       };
-
-      console.log("Guardando evento:", eventData);
-
       // Guardar en Firestore
       const docRef = await saveEvent(eventData);
-
-
-
       // Cerrar modal
       closeModals();
 
@@ -130,7 +143,18 @@ export function Dashboards() {
   };
 
 
-  const handleFormSubmit = async (data: Omit<Eventos, "id"> & { imageFile?: File }) => {
+  const handleFormSubmitService = async (data: Omit<Servicios, "id"> & { imageFile?: File }) => {
+    if (editingService) {
+      // Editar servicio
+      await handleUpdateService({ ...data, id: editingService.id, image: data.image });
+    } else {
+      // Crear nuevo evento
+      await handleAddService(data);
+    }
+  };
+
+
+   const handleFormSubmit = async (data: Omit<Eventos, "id"> & { imageFile?: File }) => {
     if (editingEvent) {
       // Editar evento
       await handleUpdateEvent({ ...data, id: editingEvent.id, image: data.image });
@@ -167,6 +191,7 @@ export function Dashboards() {
         image: imageUrl,
         imagePath: imagePath,
         url: updatedEvent.url || "",
+        estado: updatedEvent.estado,
       });
 
       // Actualizar UI
@@ -188,34 +213,117 @@ export function Dashboards() {
     }
   };
 
+const handleUpdateService = async (updatedService: Omit<Servicios, "id"> & { id: string; imageFile?: File; imagePath?: string }) => {
+    try {
+      let imageUrl = updatedService.image || "";       // URL existente
+      let imagePath = updatedService.imagePath || "";  // Path existente
 
-  // Service handlers
-  const handleAddService = (serviceData: Omit<Menu, 'id'>) => {
-    if (editingService) {
-      setServices(services.map(s =>
-        s.id === editingService.id ? { ...serviceData, id: editingService.id } : s
-      ));
-      setEditingService(undefined);
-    } else {
-      const newService: Menu = {
-        ...serviceData,
-        id: Date.now(),
-      };
-      setServices([...services, newService]);
+      if (updatedService.imageFile) {
+        // Si hay imagen anterior, eliminarla
+        if (imagePath) {
+          console.log("Eliminando imagen anterior:", imagePath);
+          await deleteImage(imagePath);
+        }
+
+        // Subir nueva imagen
+        const uploadedImage = await uploadImageService(updatedService .imageFile);
+        imageUrl = uploadedImage.url;
+        imagePath = uploadedImage.path;
+      }
+
+      // Actualizar Firestore
+      const eventRef = doc(db, "Servicios", updatedService.id);
+      await updateDoc(eventRef, {
+        name: updatedService.name,
+        descriptionProduct: updatedService.descriptionProduct,
+        price: updatedService.price,
+        caracteristicas: updatedService.caracteristicas,
+        eventos: updatedService.eventos,
+        anticipacion: updatedService.anticipacion,
+        estado: updatedService.estado,
+        cantidadPerosonas: updatedService.cantidadPerosonas,
+        image: imageUrl,
+        imagePath: imagePath,
+  
+
+      });
+
+      // Actualizar UI
+     setServices(prev =>
+        prev.map(e =>
+          e.id === updatedService.id
+            ? { ...updatedService, image: imageUrl, imagePath } // actualizamos URL y path
+            : e
+        )
+      );
+
+      setIsEventModalOpen(false);
+      setEditingEvent(undefined);
+
+      alert("Evento actualizado correctamente");
+    } catch (error) {
+      console.error("Error al actualizar evento:", error);
+      alert("No se pudo actualizar el evento");
     }
-    setIsServiceModalOpen(false);
   };
 
-  const handleEditService = (service: Menu) => {
+  // Service handlers
+  const handleAddService= async (data: Omit<Servicios, "id"> & { imageFile?: File }) => {
+    try {
+
+      let uploadedImage = data.imageFile ? await uploadImageService(data.imageFile) : { url: "", path: "" };
+
+      const eventData = {
+        name: data.name,
+        descriptionProduct: data.descriptionProduct,
+        price: data.price,
+        caracteristicas: data.caracteristicas,
+        eventos: data.eventos,
+        anticipacion: data.anticipacion,
+        estado: data.estado,
+        cantidadPerosonas: data.cantidadPerosonas,
+       image: uploadedImage.url,       
+      imagePath: uploadedImage.path,  
+        
+      };
+      // Guardar en Firestore
+      const docRef = await saveService(eventData);
+      // Cerrar modal
+      closeModals();
+
+    
+    } catch (error) {
+      console.error("Error al guardar servicio:", error);
+      alert("Error al guardar el servicio");
+    }
+  };
+
+
+  const handleEditService = (service: Servicios) => {
     setEditingService(service);
     setIsServiceModalOpen(true);
   };
 
-  const handleDeleteService = (id: number) => {
-    if (confirm('¿Estás seguro de que quieres eliminar este servicio?')) {
-      setServices(services.filter(s => s.id !== id));
+  const handleDeleteService = async (service: Servicios) => {
+    if (!confirm("¿Seguro que quieres eliminar este evento?")) return;
+
+    try {
+      // Eliminar imagen si existe
+      if (service.image) {
+        await deleteImage(service.image);
+      }
+
+      // Eliminar documento de Firestore
+    
+      await deleteDoc(doc(db, "Servicios", service.id.toString()));
+
+      alert("Evento eliminado correctamente");
+    } catch (error) {
+      console.error("Error al eliminar evento:", error);
+      alert("No se pudo eliminar el evento");
     }
   };
+  
 
   const closeModals = () => {
     setIsEventModalOpen(false);
@@ -369,7 +477,7 @@ export function Dashboards() {
       >
         <ServiceForm
           service={editingService}
-          onSubmit={handleAddService}
+          onSubmit={handleFormSubmitService}
           onCancel={closeModals}
         />
       </Modal>

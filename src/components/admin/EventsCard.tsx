@@ -18,6 +18,12 @@ export function EventCard({ event, onEdit, onDelete }: EventCardProps) {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
           <div className="absolute inset-0 bg-linear-to-t from-slate-900 to-transparent opacity-60"></div>
+            <span
+            className={`absolute top-3 right-3 px-3 py-1 text-xs font-semibold rounded-full
+        ${event.estado ? 'bg-green-500' : 'bg-red-500'} text-white`}
+          >
+            {event.estado ? 'Disponible' : 'No disponible'}
+          </span>
         </div>
       )}
       

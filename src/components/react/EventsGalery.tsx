@@ -11,7 +11,7 @@ import type { Eventos } from "../../lib/data";
 import { useState } from "react";
 
 export function EventsGalery() {
-const [galleryImages, setGalleryImages] = useState<{ id: string; url: string }[]>([]);
+const [galleryImages, setGalleryImages] = useState<  Eventos []>([]);
       const sliderSettings = {
     dots: true,
     infinite: true,
@@ -42,13 +42,11 @@ const [galleryImages, setGalleryImages] = useState<{ id: string; url: string }[]
   const fetchImages = async () => {
     try {
       const snapshot = await getDocs(collection(db, "eventos"));
-      const images = snapshot.docs
-        .map(doc => {
-          const data = doc.data();
-          return data.image ? { id: doc.id, url: data.image } : null;
-        })
-        .filter(Boolean) as { id: string; url: string }[];
-
+     const images = snapshot.docs.map(doc => {
+        const data = doc.data() as Eventos;
+        return {   ...data, id: doc.id  };
+      });
+      
       setGalleryImages(images);
     } catch (error) {
       console.error("Error cargando imágenes:", error);
@@ -74,11 +72,11 @@ const [galleryImages, setGalleryImages] = useState<{ id: string; url: string }[]
 
           <div className="max-w-7xl mx-auto gallery-slider">
             <Slider {...sliderSettings}>
-              {galleryImages.map((image, index) => (
+              {galleryImages.filter(image => image.estado === true).map((image, index) => (
                 <div key={index} className="px-2">
                   <div className="relative h-80 rounded-lg overflow-hidden">
                     <img
-                      src={image.url}
+                      src={image.image}
                       alt={`Evento ${index + 1}`}
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                       onClick={()=>{

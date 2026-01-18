@@ -1,7 +1,7 @@
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage } from '../lib/firebase';
 import { collection, addDoc } from "firebase/firestore";
-import type { Eventos } from '../lib/data';
+import type { Eventos, Servicios } from '../lib/data';
 
 
 
@@ -19,8 +19,32 @@ export const uploadImage = async (file: File, folder = "eventos") => {
   return { url, path: filePath }; // <-- ⚡ devuelve ambos
 };
 
+export const uploadImageService = async (file: File, folder = "servicios") => {
+  const safeFileName = file.name.replace(/[^\w.-]/g, "_");
+  const filePath = `${folder}/${Date.now()}-${safeFileName}`;
+  const storageRef = ref(storage, filePath);
+console.log("FILE RECIBIDO:", file);
+
+  // Subimos la imagen
+  await uploadBytes(storageRef, file);
+
+  // Obtenemos URL pública
+  const url = await getDownloadURL(storageRef);
+
+  return { url, path: filePath }; // <-- ⚡ devuelve ambos
+};
+
 export const saveEvent = async (data: Omit<Eventos, "id">) => {
   const docRef = await addDoc(collection(db, "eventos"), {
+    ...data,
+    createdAt: new Date(),
+  });
+
+  return docRef.id;
+};
+
+export const saveService = async (data: Omit<Servicios, "id">) => {
+  const docRef = await addDoc(collection(db, "Servicios"), {
     ...data,
     createdAt: new Date(),
   });
