@@ -25,17 +25,24 @@ export interface Servicios {
 
 
 export interface Eventos {
-  id:  string ;
+  id: string;
   image?: string;
   url: string;
-  nombre?: string;
-    imagePath?: string; 
+  nombre: string;
+  imagePath?: string;
   ubicacion?: string;
   descripcion?: string;
-  fechaevento?: string;
+  fecha?: string;
+  fechaevento?: string; // Agregado para compatibilidad
+  invitados?: string; // Opcional - puede no existir en Firebase
   estado?: boolean;
-
+  fotos?: string[]; // Opcional - Array de URLs de fotos para la galería
+  videoUrl?: string; // Opcional - URL del video
+  videoPath?: string; // Opcional - Path del video en Storage
+  imageFiles?: File[]; // Opcional - Archivos de imagen para subir
+  whatsappNumber?: string; // Opcional - Número de WhatsApp para cotizar
 }
+
 
 export interface HowItWorksStep {
   icons: LucideIcon;
@@ -66,6 +73,7 @@ export const howitworksSteps: HowItWorksStep[] = [
     title: "Escribinos por whatsapp o llamanos para coordinar",
     description: "Escribinos por whatsapp o llamanos para coordinar",
   },
+
 ];
 
 

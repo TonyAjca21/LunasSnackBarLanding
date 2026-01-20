@@ -32,11 +32,12 @@ export function LoginAdmin() {
             />
 
             <div className="bg-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-8 rounded-lg shadow-lg w-full max-w-md">
+               <a href="/">
                 <img
-                    src="/fondoLunas.png"
+                    src="/LogoLunasSnackBar.jpg"
                     className="w-40 h-32 mx-auto mb-4 rounded-md object-cover"
                 />
-
+</a>
                 <h2 className="text-2xl font-bold mb-6 text-center">
                     Admin Login
                 </h2>

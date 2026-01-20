@@ -11,11 +11,12 @@ import type { Eventos } from '../../lib/data';
 import { Modal } from "./modal";
 import { EventForm } from "./EventForm";
 import { ServiceForm } from "./ServiceForm";
-import { uploadImage, saveEvent, deleteImage, uploadImageService, saveService } from "../../services/storage.services.ts";
+import { uploadImages, saveEvent, deleteImage, uploadImageService, saveService, uploadVideo } from "../../services/storage.services.ts";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { onSnapshot } from "firebase/firestore";
-import { deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { deleteDoc, doc, updateDoc,addDoc } from "firebase/firestore";
+import type { UploadedFile, videoUploadResult } from "../../services/storage.services.ts";
 export function Dashboards() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,6 +29,8 @@ export function Dashboards() {
 
   const [editingEvent, setEditingEvent] = useState<Eventos | undefined>();
   const [editingService, setEditingService] = useState<Servicios | undefined>();
+
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   // Verificar si el usuario está logueado
   useEffect(() => {
     // 1️⃣ Escuchar autenticación
@@ -89,34 +92,58 @@ export function Dashboards() {
 
 
 
-  const handleAddEvent = async (data: Omit<Eventos, "id"> & { imageFile?: File }) => {
-    try {
-      console.log("handleAddEvent llamado con:", data);
+  const handleAddEvent = async (data: Omit<Eventos, "id"> & { imageFiles?: File[] } & { videoFile?: File }) => {
+  try {
+    console.log("handleAddEvent llamado con:", data);
 
-      let uploadedImage = data.imageFile ? await uploadImage(data.imageFile) : { url: "", path: "" };
+    let uploadedImages: UploadedFile[] = [];
 
-      const eventData = {
-        nombre: data.nombre,
-        descripcion: data.descripcion,
-        fechaevento: data.fechaevento,
-        ubicacion: data.ubicacion,
-        image: uploadedImage.url,      // URL para mostrar
-        imagePath: uploadedImage.path, // path para eliminar luego
-        url: data.url || "",
-        estado: data.estado,
-      };
-      // Guardar en Firestore
-      const docRef = await saveEvent(eventData);
-      // Cerrar modal
-      closeModals();
-
-      console.log("Evento guardado correctamente y modal cerrado");
-
-    } catch (error) {
-      console.error("Error al guardar evento:", error);
-      alert("Error al guardar el evento");
+    // Subir todas las imágenes si existen
+    if (data.imageFiles && data.imageFiles.length > 0) {
+      uploadedImages = await uploadImages(data.imageFiles, data.nombre);
     }
-  };
+
+  
+   
+   let videoData = data.videoFile ? await uploadVideo(data.videoFile, data.nombre) : { url: "", path: "" };
+
+
+    const urls = uploadedImages.map(u => u.url);
+    const paths = uploadedImages.map(u => u.path);
+
+  
+    // Construimos el evento con fotos y portada
+    const eventData = {
+      nombre: data.nombre,
+      descripcion: data.descripcion,
+      fechaevento: data.fechaevento,
+      ubicacion: data.ubicacion,
+      image: urls[0] || "",       // primera imagen como portada
+      imagePath: paths[0] || "",  // path de la portada
+      url: data.url || "",
+      estado: data.estado,
+      fotos: urls,                // todas las imágenes
+      videoUrl:  videoData?.url || "",
+      videoPath: videoData?.path || "",
+      whatsappNumber: data.whatsappNumber || "",
+      invitados: data.invitados || "",
+    };
+
+    console.log("Datos del evento a guardar:", eventData);
+
+    // Guardar en Firestore
+    const docRef = await addDoc(collection(db, "eventos"), eventData);
+
+    console.log("Evento guardado correctamente con ID:", docRef.id);
+
+    // Cerrar modal si existe
+    closeModals();
+
+  } catch (error) {
+    console.error("Error al guardar evento:", error);
+    alert("Error al guardar el evento");
+  }
+};
 
 
   const handleEditEvent = (event: Eventos) => {
@@ -146,6 +173,7 @@ export function Dashboards() {
   const handleFormSubmitService = async (data: Omit<Servicios, "id"> & { imageFile?: File }) => {
     if (editingService) {
       // Editar servicio
+      console.log("EDITING SERVICE EN DASHBOARD:", editingService);
       await handleUpdateService({ ...data, id: editingService.id, image: data.image });
     } else {
       // Crear nuevo evento
@@ -157,6 +185,7 @@ export function Dashboards() {
    const handleFormSubmit = async (data: Omit<Eventos, "id"> & { imageFile?: File }) => {
     if (editingEvent) {
       // Editar evento
+      console.log("EDITING EVENT EN DASHBOARD:", editingEvent);
       await handleUpdateEvent({ ...data, id: editingEvent.id, image: data.image });
     } else {
       // Crear nuevo evento
@@ -167,6 +196,7 @@ export function Dashboards() {
     try {
       let imageUrl = updatedEvent.image || "";       // URL existente
       let imagePath = updatedEvent.imagePath || "";  // Path existente
+       
 
       if (updatedEvent.imageFile) {
         // Si hay imagen anterior, eliminarla
@@ -176,14 +206,17 @@ export function Dashboards() {
         }
 
         // Subir nueva imagen
-        const uploadedImage = await uploadImage(updatedEvent.imageFile);
-        imageUrl = uploadedImage.url;
-        imagePath = uploadedImage.path;
+        const uploadedImage = await uploadImages([updatedEvent.imageFile], updatedEvent.nombre);
+        imageUrl = uploadedImage[0].url;
+        imagePath = uploadedImage[0].path;
       }
-
+  if (!updatedEvent.id) {
+  throw new Error("ID del evento no existe");
+}
       // Actualizar Firestore
       const eventRef = doc(db, "eventos", updatedEvent.id);
       await updateDoc(eventRef, {
+   
         nombre: updatedEvent.nombre,
         descripcion: updatedEvent.descripcion,
         fechaevento: updatedEvent.fechaevento,

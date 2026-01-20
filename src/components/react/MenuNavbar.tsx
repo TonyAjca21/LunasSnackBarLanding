@@ -30,7 +30,7 @@ export function MenuNavbar() {
           {/* Logo */}
           <div className="flex items-center">
             <img
-              src="/ImagendePruebaComida.jpg"
+              src="/LogoLunasSnackBar.jpg"
               alt="Lunas Snack Bar"
               className="h-14 w-14 object-contain"
             />

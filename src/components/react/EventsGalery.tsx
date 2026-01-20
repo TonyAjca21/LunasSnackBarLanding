@@ -11,8 +11,8 @@ import type { Eventos } from "../../lib/data";
 import { useState } from "react";
 
 export function EventsGalery() {
-const [galleryImages, setGalleryImages] = useState<  Eventos []>([]);
-      const sliderSettings = {
+  const [galleryImages, setGalleryImages] = useState<Eventos[]>([]);
+  const sliderSettings = {
     dots: true,
     infinite: true,
     speed: 500,
@@ -39,58 +39,58 @@ const [galleryImages, setGalleryImages] = useState<  Eventos []>([]);
   };
 
   useEffect(() => {
-  const fetchImages = async () => {
-    try {
-      const snapshot = await getDocs(collection(db, "eventos"));
-     const images = snapshot.docs.map(doc => {
-        const data = doc.data() as Eventos;
-        return {   ...data, id: doc.id  };
-      });
-      
-      setGalleryImages(images);
-    } catch (error) {
-      console.error("Error cargando imágenes:", error);
-    }
-  };
+    const fetchImages = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "eventos"));
+        const images = snapshot.docs.map(doc => {
+          const data = doc.data() as Eventos;
+          return { ...data, id: doc.id };
+        });
 
-  fetchImages();
-}, []);
-    return (
-     <section id="galeria" className="py-20 bg-black">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <div className="inline-block">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="h-px w-16 bg-amber-500"></div>
-                <h2 className="text-4xl md:text-5xl font-bold text-amber-400" style={{ fontFamily: 'Crimson Text, serif' }}>
-                  Galería de Eventos
-                </h2>
-                <div className="h-px w-16 bg-amber-500"></div>
-              </div>
+        setGalleryImages(images);
+      } catch (error) {
+        console.error("Error cargando imágenes:", error);
+      }
+    };
+
+    fetchImages();
+  }, []);
+  return (
+    <section id="galeria" className="py-20 bg-black">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-16">
+          <div className="inline-block">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-px w-16 bg-amber-500"></div>
+              <h2 className="text-4xl md:text-5xl font-bold text-amber-400" style={{ fontFamily: 'Crimson Text, serif' }}>
+                Galería de Eventos
+              </h2>
+              <div className="h-px w-16 bg-amber-500"></div>
             </div>
           </div>
+        </div>
 
-          <div className="max-w-7xl mx-auto gallery-slider">
-            <Slider {...sliderSettings}>
-              {galleryImages.filter(image => image.estado === true).map((image, index) => (
-                <div key={index} className="px-2">
-                  <div className="relative h-80 rounded-lg overflow-hidden">
+        <div className="max-w-7xl mx-auto gallery-slider">
+          <Slider {...sliderSettings}>
+            {galleryImages.filter(image => image.estado === true).map((image, index) => (
+              <div key={index} className="px-2">
+                <div className="relative h-80 rounded-lg overflow-hidden">
+                  <a href={`/eventos/${image.id}`}>
                     <img
                       src={image.image}
-                      alt={`Evento ${index + 1}`}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                      onClick={()=>{
-                        window.location.href = `/eventos/${image.id}`;
-                      }}
+                      alt={image.nombre ?? "Evento"}
+                      className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform"
                     />
-                  </div>
+                  </a>
+
                 </div>
-              ))}
-            </Slider>
-          </div>
+              </div>
+            ))}
+          </Slider>
         </div>
-      </section>
-    );
+      </div>
+    </section>
+  );
 }
 
 

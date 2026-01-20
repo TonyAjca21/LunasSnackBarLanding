@@ -4,19 +4,55 @@ import { collection, addDoc } from "firebase/firestore";
 import type { Eventos, Servicios } from '../lib/data';
 
 
+export interface UploadedFile {
+  url: string;
+  path: string;
+}
 
-export const uploadImage = async (file: File, folder = "eventos") => {
+export interface videoUploadResult {
+  url: string;
+  path: string;
+}
+
+export const uploadImages = async (files: File[], eventName: string): Promise<UploadedFile[]> => {
+  const uploadedFiles: UploadedFile[] = [];
+
+  for (const file of files) {
+    const safeFileName = file.name.replace(/[^\w.-]/g, "_");
+    const filePath = `eventos/${eventName}/img/${Date.now()}-${safeFileName}`;
+    const storageRef = ref(storage, filePath);
+
+    // Subimos la imagen
+    await uploadBytes(storageRef, file);
+
+    // Obtenemos URL pública
+    const url = await getDownloadURL(storageRef);
+
+    uploadedFiles.push({ url, path: filePath });
+  }
+
+  return uploadedFiles;
+};
+
+export const uploadVideo = async (
+  file: File,
+  eventName: string
+): Promise<{ url: string; path: string }> => {
+  // Limpiamos el nombre del archivo
   const safeFileName = file.name.replace(/[^\w.-]/g, "_");
-  const filePath = `${folder}/${Date.now()}-${safeFileName}`;
+
+  // Creamos el path en Firebase Storage
+  const filePath = `eventos/${eventName}/video/${Date.now()}-${safeFileName}`;
   const storageRef = ref(storage, filePath);
 
-  // Subimos la imagen
+  // Subimos el archivo
   await uploadBytes(storageRef, file);
 
   // Obtenemos URL pública
   const url = await getDownloadURL(storageRef);
+  
 
-  return { url, path: filePath }; // <-- ⚡ devuelve ambos
+  return { url, path: filePath };
 };
 
 export const uploadImageService = async (file: File, folder = "servicios") => {
