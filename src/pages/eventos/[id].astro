@@ -1,20 +1,17 @@
 ---
-
-export const prerender = false
-import {EventosId} from "../../components/react/eventosId";
+export const prerender = false; // rutas dinámicas se renderizan en server
+import { EventosId } from "../../components/react/eventosId";
 import "../../styles/global.css";
 import layout from "../../layouts/Layout.astro";
 
-; // 🔥 CLAVE PARA FIREBASE
+const { id } = Astro.params;
 
-const { id } = Astro.params; // ← ID DE FIREBASE
 if (!id) {
-  throw new Error("ID de evento no encontrado");
+  // Esto evita que Vercel Serverless crashee
+  throw new Error("Evento no encontrado");
 }
-
 ---
-
-<section class="bg-gray-950 ">
-  
+<section class="bg-gray-950 min-h-screen">
+  <!-- El componente React cargará los datos desde Firebase en el cliente -->
   <EventosId id={id} client:load />
 </section>
