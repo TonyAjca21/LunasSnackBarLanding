@@ -1,20 +1,17 @@
 ---
-
-export const prerender = false
-import {EventosId} from "../../components/react/eventosId";
+// src/pages/eventos/[id].astro
+const { id } = Astro.params; // id de la URL
+import { EventosId } from "../../components/react/eventosId";
 import "../../styles/global.css";
-import layout from "../../layouts/Layout.astro";
 
-; // 🔥 CLAVE PARA FIREBASE
-
-const { id } = Astro.params; // ← ID DE FIREBASE
 if (!id) {
-  throw new Error("ID de evento no encontrado");
+  throw new Error("Evento no encontrado");
 }
+
 
 ---
 
-<section class="bg-gray-950 ">
-  
+<section class="bg-gray-950 min-h-screen">
+  <!-- Pasamos la prop id al componente React -->
   <EventosId id={id} client:load />
 </section>
