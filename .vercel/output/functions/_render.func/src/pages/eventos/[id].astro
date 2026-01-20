@@ -1,17 +1,14 @@
 ---
-// src/pages/eventos/[id].astro
-const { id } = Astro.params; // id de la URL
+export const prerender = false; // necesario para rutas dinámicas
 import { EventosId } from "../../components/react/eventosId";
 import "../../styles/global.css";
 
-if (!id) {
-  throw new Error("Evento no encontrado");
-}
-
-
+// Solo usamos Astro.params dentro del frontmatter
+const { id } = Astro.params;
+if (!id) throw new Error("Evento no encontrado");
 ---
 
 <section class="bg-gray-950 min-h-screen">
-  <!-- Pasamos la prop id al componente React -->
+  <!-- Pasamos id al componente React -->
   <EventosId id={id} client:load />
 </section>

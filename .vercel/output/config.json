@@ -20,15 +20,7 @@
 			"dest": "_render"
 		},
 		{
-			"src": "^/admin/?$",
-			"dest": "_render"
-		},
-		{
 			"src": "^/eventos/([^/]+?)/?$",
-			"dest": "_render"
-		},
-		{
-			"src": "^/$",
 			"dest": "_render"
 		}
 	]

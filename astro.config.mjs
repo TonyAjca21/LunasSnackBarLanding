@@ -5,10 +5,9 @@ import tailwindcss from '@tailwindcss/vite';
 import vercel from '@astrojs/vercel';
 
 export default defineConfig({
-  output: 'server',  // necesario para rutas dinámicas
-  adapter: vercel(), // ✅ ahora sí funciona
+  adapter: vercel(),
   integrations: [react()],
-  vite: {
-    plugins: [tailwindcss()]
-  }
+  vite: { plugins: [tailwindcss()] }
+  // OJO: quitar output: 'server'
 });
+
