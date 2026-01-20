@@ -2,13 +2,13 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
-import node from '@astrojs/node'; // ← nuevo adaptador
+import vercel from '@astrojs/vercel';
 
 export default defineConfig({
-  output: 'static', // <-- genera HTML estático
+  output: 'server',  // necesario para rutas dinámicas
+  adapter: vercel(), // ✅ ahora sí funciona
   integrations: [react()],
   vite: {
     plugins: [tailwindcss()]
   }
 });
-

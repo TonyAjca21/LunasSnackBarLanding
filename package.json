@@ -26,6 +26,7 @@
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
+    "@astrojs/vercel": "^9.0.4",
     "@types/firebase": "^3.2.3",
     "@types/react-slick": "^0.23.13"
   }
