@@ -13,43 +13,42 @@ interface Props {
   onBack?: () => void;
 }
 
-export function EventosId() {
-  const [id, setId] = useState<string | null>(null);
+export function EventosId({ id, onBack }: Props) {
   const [evento, setEvento] = useState<Eventos | null>(null);
 
-  // Obtener ID desde la URL
+  // Cargar datos de Firebase solo en navegador
   useEffect(() => {
-    const urlId = window.location.pathname.split("/").pop();
-    setId(urlId || null);
-  }, []);
-
-  // Obtener evento desde Firebase
-  useEffect(() => {
-    if (!id) return;
-
     const fetchEvento = async () => {
-      const ref = doc(db, "eventos", id);
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        setEvento({ id: snap.id, ...snap.data() } as Eventos);
+      try {
+        const ref = doc(db, "eventos", id);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          setEvento({ id: snap.id, ...snap.data() } as Eventos);
+        }
+      } catch (error) {
+        console.error("Error cargando evento:", error);
       }
     };
 
     fetchEvento();
   }, [id]);
 
-  if (!evento) return <p>Cargando evento...</p>;
+  if (!evento) return <p className="text-white">Cargando evento...</p>;
 
+  // Función para abrir WhatsApp
   const handleWhatsAppClick = () => {
-    const number = evento.whatsappNumber || '99268791';
+    const number = evento.whatsappNumber || "99268791";
     const message = encodeURIComponent(
       `Hola! Me interesa cotizar un evento similar a "${evento.nombre}"`
     );
-    window.open(`https://wa.me/${number}?text=${message}`, '_blank');
+    window.open(`https://wa.me/${number}?text=${message}`, "_blank");
   };
 
-  const handleBackClick = () => window.history.back();
-
+  // Función para volver atrás
+  const handleBackClick = () => {
+    if (onBack) return onBack();
+    window.history.back();
+  };
   return (
     <div className="min-h-screen bg-linear-to-b from-[#0a0a0a] to-[#1a1a1a] text-white">
       <motion.button
