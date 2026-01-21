@@ -1,12 +1,12 @@
-import { q as decryptString, v as createSlotValueFromString, w as isAstroComponentFactory, n as renderComponent, r as renderTemplate, R as ROUTE_TYPE_HEADER, x as REROUTE_DIRECTIVE_HEADER, A as AstroError, y as i18nNoLocaleFoundInPath, z as ResponseSentError, B as ActionNotFoundError, C as MiddlewareNoDataOrNextCalled, D as MiddlewareNotAResponse, G as originPathnameSymbol, H as RewriteWithBodyUsed, J as GetStaticPathsRequired, K as InvalidGetStaticPathsReturn, O as InvalidGetStaticPathsEntry, P as GetStaticPathsExpectedParams, Q as GetStaticPathsInvalidRouteParam, S as PageNumberParamNotFound, T as DEFAULT_404_COMPONENT, V as NoMatchingStaticPathFound, W as PrerenderDynamicEndpointPathCollide, X as ReservedSlotName, Y as renderSlotToString, Z as renderJSX, _ as chunkToString, $ as isRenderInstruction, a0 as ForbiddenRewrite, a1 as SessionStorageInitError, a2 as SessionStorageSaveError, a3 as ASTRO_VERSION, a4 as CspNotEnabled, a5 as LocalsReassigned, a6 as generateCspDigest, a7 as PrerenderClientAddressNotAvailable, a8 as clientAddressSymbol, a9 as ClientAddressNotAvailable, aa as StaticClientAddressNotAvailable, ab as AstroResponseHeadersReassigned, ac as responseSentSymbol$1, ad as renderPage, ae as REWRITE_DIRECTIVE_HEADER_KEY, af as REWRITE_DIRECTIVE_HEADER_VALUE, ag as renderEndpoint, ah as LocalsNotAnObject, ai as REROUTABLE_STATUS_CODES, aj as nodeRequestAbortControllerCleanupSymbol } from './astro/server_BMjgO3qf.mjs';
+import { q as decryptString, v as createSlotValueFromString, w as isAstroComponentFactory, n as renderComponent, r as renderTemplate, R as ROUTE_TYPE_HEADER, x as REROUTE_DIRECTIVE_HEADER, A as AstroError, y as i18nNoLocaleFoundInPath, z as ResponseSentError, B as ActionNotFoundError, C as MiddlewareNoDataOrNextCalled, D as MiddlewareNotAResponse, G as originPathnameSymbol, H as RewriteWithBodyUsed, J as GetStaticPathsRequired, K as InvalidGetStaticPathsReturn, O as InvalidGetStaticPathsEntry, P as GetStaticPathsExpectedParams, Q as GetStaticPathsInvalidRouteParam, S as PageNumberParamNotFound, T as DEFAULT_404_COMPONENT, V as NoMatchingStaticPathFound, W as PrerenderDynamicEndpointPathCollide, X as ReservedSlotName, Y as renderSlotToString, Z as renderJSX, _ as chunkToString, $ as isRenderInstruction, a0 as ForbiddenRewrite, a1 as SessionStorageInitError, a2 as SessionStorageSaveError, a3 as ASTRO_VERSION, a4 as CspNotEnabled, a5 as LocalsReassigned, a6 as generateCspDigest, a7 as PrerenderClientAddressNotAvailable, a8 as clientAddressSymbol, a9 as ClientAddressNotAvailable, aa as StaticClientAddressNotAvailable, ab as AstroResponseHeadersReassigned, ac as responseSentSymbol$1, ad as renderPage, ae as REWRITE_DIRECTIVE_HEADER_KEY, af as REWRITE_DIRECTIVE_HEADER_VALUE, ag as renderEndpoint, ah as LocalsNotAnObject, ai as FailedToFindPageMapSSR, aj as REROUTABLE_STATUS_CODES, ak as nodeRequestAbortControllerCleanupSymbol } from './astro/server_Bk3-GWK7.mjs';
 import colors from 'piccolore';
 import 'clsx';
-import { A as ActionError, d as deserializeActionResult, s as serializeActionResult, a as ACTION_RPC_ROUTE_PATTERN, b as ACTION_QUERY_PARAMS, g as getActionQueryString, D as DEFAULT_404_ROUTE, c as default404Instance, N as NOOP_MIDDLEWARE_FN, e as ensure404Route } from './astro-designed-error-pages_C-4sdQRP.mjs';
+import { A as ActionError, d as deserializeActionResult, s as serializeActionResult, a as ACTION_RPC_ROUTE_PATTERN, b as ACTION_QUERY_PARAMS, g as getActionQueryString, D as DEFAULT_404_ROUTE, c as default404Instance, N as NOOP_MIDDLEWARE_FN, e as ensure404Route } from './astro-designed-error-pages_rkLyPeuK.mjs';
 import 'es-module-lexer';
 import buffer from 'node:buffer';
 import crypto$1 from 'node:crypto';
 import { Http2ServerResponse } from 'node:http2';
-import { c as appendForwardSlash, j as joinPaths, f as fileExtension, s as slash, p as prependForwardSlash, r as removeTrailingForwardSlash, d as trimSlashes, m as matchPattern, e as isInternalPath, g as collapseDuplicateTrailingSlashes, h as hasFileExtension } from './index_ChlblgGj.mjs';
+import { c as appendForwardSlash, j as joinPaths, f as fileExtension, s as slash, p as prependForwardSlash, r as removeTrailingForwardSlash, d as trimSlashes, m as matchPattern, e as isInternalPath, g as collapseDuplicateTrailingSlashes, h as hasFileExtension } from './index_ty8FbXfT.mjs';
 import { serialize, parse } from 'cookie';
 import { unflatten as unflatten$1, stringify as stringify$1 } from 'devalue';
 import { createStorage, builtinDrivers } from 'unstorage';
@@ -3563,6 +3563,12 @@ class App {
     let session;
     try {
       const mod = await this.#pipeline.getModuleForRoute(routeData);
+      if (!mod || typeof mod.page !== "function") {
+        throw new AstroError({
+          ...FailedToFindPageMapSSR,
+          message: `The module for route "${routeData.route}" does not have a valid page function. This may occur when using static output mode with an SSR adapter.`
+        });
+      }
       const renderContext = await RenderContext.create({
         pipeline: this.#pipeline,
         locals,
@@ -3575,6 +3581,7 @@ class App {
       session = renderContext.session;
       response = await renderContext.render(await mod.page());
     } catch (err) {
+      this.#logger.error("router", "Error while trying to render the route " + routeData.route);
       this.#logger.error(null, err.stack || err.message || String(err));
       return this.#renderError(request, {
         locals,
@@ -3656,6 +3663,11 @@ class App {
         }
       }
       const mod = await this.#pipeline.getModuleForRoute(errorRouteData);
+      if (!mod || typeof mod.page !== "function") {
+        const response2 = this.#mergeResponses(new Response(null, { status }), originalResponse);
+        Reflect.set(response2, responseSentSymbol$1, true);
+        return response2;
+      }
       let session;
       try {
         const renderContext = await RenderContext.create({

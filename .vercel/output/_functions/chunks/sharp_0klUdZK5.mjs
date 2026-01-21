@@ -1,5 +1,5 @@
-import { A as AstroError, an as MissingSharp } from './astro/server_BMjgO3qf.mjs';
-import { b as baseService, p as parseQuality } from './generic_CypncJcz.mjs';
+import { A as AstroError, ao as MissingSharp } from './astro/server_Bk3-GWK7.mjs';
+import { b as baseService, p as parseQuality } from './generic_DsHUm8x3.mjs';
 
 let sharp;
 const qualityTable = {
@@ -43,6 +43,7 @@ const sharpService = {
       limitInputPixels: config.service.config.limitInputPixels
     });
     result.rotate();
+    const { format } = await result.metadata();
     const withoutEnlargement = Boolean(transform.fit);
     if (transform.width && transform.height && transform.fit) {
       const fit = fitMap[transform.fit] ?? "inside";
@@ -74,13 +75,7 @@ const sharpService = {
           quality = transform.quality in qualityTable ? qualityTable[transform.quality] : void 0;
         }
       }
-      const isGifInput = inputBuffer[0] === 71 && // 'G'
-      inputBuffer[1] === 73 && // 'I'
-      inputBuffer[2] === 70 && // 'F'
-      inputBuffer[3] === 56 && // '8'
-      (inputBuffer[4] === 57 || inputBuffer[4] === 55) && // '9' or '7'
-      inputBuffer[5] === 97;
-      if (transform.format === "webp" && isGifInput) {
+      if (transform.format === "webp" && format === "gif") {
         result.webp({ quality: typeof quality === "number" ? quality : void 0, loop: 0 });
       } else {
         result.toFormat(transform.format, { quality });

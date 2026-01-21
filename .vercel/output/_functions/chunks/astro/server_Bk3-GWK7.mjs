@@ -5,7 +5,7 @@ import { decodeBase64, encodeBase64, encodeHexUpperCase, decodeHex } from '@oslo
 import { z } from 'zod';
 import 'cssesc';
 
-const ASTRO_VERSION = "5.16.6";
+const ASTRO_VERSION = "5.16.11";
 const REROUTE_DIRECTIVE_HEADER = "X-Astro-Reroute";
 const REWRITE_DIRECTIVE_HEADER_KEY = "X-Astro-Rewrite";
 const REWRITE_DIRECTIVE_HEADER_VALUE = "yes";
@@ -260,6 +260,11 @@ const MissingSharp = {
   title: "Could not find Sharp.",
   message: "Could not find Sharp. Please install Sharp (`sharp`) manually into your project or migrate to another image service.",
   hint: "See Sharp's installation instructions for more information: https://sharp.pixelplumbing.com/install. If you are not relying on `astro:assets` to optimize, transform, or process any images, you can configure a passthrough image service instead of installing Sharp. See https://docs.astro.build/en/reference/errors/missing-sharp for more information.\n\nSee https://docs.astro.build/en/guides/images/#default-image-service for more information on how to migrate to another image service."
+};
+const FailedToFindPageMapSSR = {
+  name: "FailedToFindPageMapSSR",
+  title: "Astro couldn't find the correct page to render",
+  message: "Astro couldn't find the correct page to render, probably because it wasn't correctly mapped for SSR usage. This is an internal error. Please file an issue."
 };
 const i18nNoLocaleFoundInPath = {
   name: "i18nNoLocaleFoundInPath",
@@ -1364,6 +1369,13 @@ class SlotString extends HTMLString {
 function isSlotString(str) {
   return !!str[slotString];
 }
+function mergeSlotInstructions(target, source) {
+  if (source.instructions?.length) {
+    target ??= [];
+    target.push(...source.instructions);
+  }
+  return target;
+}
 function renderSlot(result, slotted, fallback) {
   if (!slotted && fallback) {
     return renderSlot(result, fallback);
@@ -1381,10 +1393,7 @@ async function renderSlotToString(result, slotted, fallback) {
     write(chunk) {
       if (chunk instanceof SlotString) {
         content += chunk;
-        if (chunk.instructions) {
-          instructions ??= [];
-          instructions.push(...chunk.instructions);
-        }
+        instructions = mergeSlotInstructions(instructions, chunk);
       } else if (chunk instanceof Response) return;
       else if (typeof chunk === "object" && "type" in chunk && typeof chunk.type === "string") {
         if (instructions === null) {
@@ -1660,6 +1669,14 @@ function stringifyChunk(result, chunk) {
         result._metadata.hasRenderedServerIslandRuntime = true;
         return renderServerIslandRuntime();
       }
+      case "script": {
+        const { id, content } = instruction;
+        if (result._metadata.renderedScripts.has(id)) {
+          return "";
+        }
+        result._metadata.renderedScripts.add(id);
+        return content;
+      }
       default: {
         throw new Error(`Unknown chunk type: ${chunk.type}`);
       }
@@ -1692,6 +1709,13 @@ function chunkToByteArray(result, chunk) {
   } else {
     const stringified = stringifyChunk(result, chunk);
     return encoder.encode(stringified.toString());
+  }
+}
+function chunkToByteArrayOrString(result, chunk) {
+  if (ArrayBuffer.isView(chunk)) {
+    return chunk;
+  } else {
+    return stringifyChunk(result, chunk).toString();
   }
 }
 function isRenderInstance(obj) {
@@ -2022,13 +2046,31 @@ async function renderToAsyncIterable(result, componentFactory, props, children, 
         throw error;
       }
       let length = 0;
+      let stringToEncode = "";
       for (let i = 0, len = buffer.length; i < len; i++) {
-        length += buffer[i].length;
+        const bufferEntry = buffer[i];
+        if (typeof bufferEntry === "string") {
+          const nextIsString = i + 1 < len && typeof buffer[i + 1] === "string";
+          stringToEncode += bufferEntry;
+          if (!nextIsString) {
+            const encoded = encoder.encode(stringToEncode);
+            length += encoded.length;
+            stringToEncode = "";
+            buffer[i] = encoded;
+          } else {
+            buffer[i] = "";
+          }
+        } else {
+          length += bufferEntry.length;
+        }
       }
       let mergedArray = new Uint8Array(length);
       let offset = 0;
       for (let i = 0, len = buffer.length; i < len; i++) {
         const item = buffer[i];
+        if (item === "") {
+          continue;
+        }
         mergedArray.set(item, offset);
         offset += item.length;
       }
@@ -2058,7 +2100,7 @@ async function renderToAsyncIterable(result, componentFactory, props, children, 
       if (chunk instanceof Response) {
         throw new AstroError(ResponseSentError);
       }
-      const bytes = chunkToByteArray(result, chunk);
+      const bytes = chunkToByteArrayOrString(result, chunk);
       if (bytes.length > 0) {
         buffer.push(bytes);
         next?.resolve();
@@ -2486,6 +2528,7 @@ function normalizeProps(props) {
 }
 async function renderComponentToString(result, displayName, Component, props, slots = {}, isPage = false, route) {
   let str = "";
+  let instructions = null;
   let renderedFirstPageChunk = false;
   let head = "";
   if (isPage && !result.partial && nonAstroPageNeedsHeadInjection(Component)) {
@@ -2502,7 +2545,19 @@ async function renderComponentToString(result, displayName, Component, props, sl
           }
         }
         if (chunk instanceof Response) return;
-        str += chunkToString(result, chunk);
+        if (isPage) {
+          str += chunkToString(result, chunk);
+        } else {
+          if (chunk instanceof SlotString) {
+            str += chunk;
+            instructions = mergeSlotInstructions(instructions, chunk);
+          } else if (isRenderInstruction(chunk)) {
+            instructions ??= [];
+            instructions.push(chunk);
+          } else {
+            str += chunkToString(result, chunk);
+          }
+        }
       }
     };
     const renderInstance = await renderComponent(result, displayName, Component, props, slots);
@@ -2518,7 +2573,10 @@ async function renderComponentToString(result, displayName, Component, props, sl
     }
     throw e;
   }
-  return str;
+  if (isPage) {
+    return str;
+  }
+  return new SlotString(str, instructions);
 }
 function nonAstroPageNeedsHeadInjection(pageComponent) {
   return !!pageComponent?.[needsHeadRenderingSymbol];
@@ -2539,10 +2597,23 @@ async function renderJSX(result, vnode) {
       return vnode;
     case (!vnode && vnode !== 0):
       return "";
-    case Array.isArray(vnode):
-      return markHTMLString(
-        (await Promise.all(vnode.map((v) => renderJSX(result, v)))).join("")
-      );
+    case Array.isArray(vnode): {
+      const renderedItems = await Promise.all(vnode.map((v) => renderJSX(result, v)));
+      let instructions = null;
+      let content = "";
+      for (const item of renderedItems) {
+        if (item instanceof SlotString) {
+          content += item;
+          instructions = mergeSlotInstructions(instructions, item);
+        } else {
+          content += item;
+        }
+      }
+      if (instructions) {
+        return markHTMLString(new SlotString(content, instructions));
+      }
+      return markHTMLString(content);
+    }
   }
   return renderJSXVNode(result, vnode);
 }
@@ -2748,20 +2819,17 @@ async function renderPage(result, componentFactory, props, children, streaming, 
 }
 
 async function renderScript(result, id) {
-  if (result._metadata.renderedScripts.has(id)) return;
-  result._metadata.renderedScripts.add(id);
   const inlined = result.inlinedScripts.get(id);
+  let content = "";
   if (inlined != null) {
     if (inlined) {
-      return markHTMLString(`<script type="module">${inlined}</script>`);
-    } else {
-      return "";
+      content = `<script type="module">${inlined}</script>`;
     }
+  } else {
+    const resolved = await result.resolve(id);
+    content = `<script type="module" src="${result.userAssetsBase ? (result.base === "/" ? "" : result.base) + result.userAssetsBase : ""}${resolved}"></script>`;
   }
-  const resolved = await result.resolve(id);
-  return markHTMLString(
-    `<script type="module" src="${result.userAssetsBase ? (result.base === "/" ? "" : result.base) + result.userAssetsBase : ""}${resolved}"></script>`
-  );
+  return createRenderInstruction({ type: "script", id, content });
 }
 
 "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_".split("").reduce((v, c) => (v[c.charCodeAt(0)] = c, v), []);
@@ -2784,4 +2852,4 @@ function spreadAttributes(values = {}, _name, { class: scopedClassName } = {}) {
   return markHTMLString(output);
 }
 
-export { isRenderInstruction as $, AstroError as A, ActionNotFoundError as B, MiddlewareNoDataOrNextCalled as C, MiddlewareNotAResponse as D, ExpectedImage as E, FailedToFetchRemoteImageDimensions as F, originPathnameSymbol as G, RewriteWithBodyUsed as H, IncompatibleDescriptorOptions as I, GetStaticPathsRequired as J, InvalidGetStaticPathsReturn as K, LocalImageUsedWrongly as L, MissingImageDimension as M, NoImageMetadata as N, InvalidGetStaticPathsEntry as O, GetStaticPathsExpectedParams as P, GetStaticPathsInvalidRouteParam as Q, ROUTE_TYPE_HEADER as R, PageNumberParamNotFound as S, DEFAULT_404_COMPONENT as T, UnsupportedImageFormat as U, NoMatchingStaticPathFound as V, PrerenderDynamicEndpointPathCollide as W, ReservedSlotName as X, renderSlotToString as Y, renderJSX as Z, chunkToString as _, UnsupportedImageConversion as a, ForbiddenRewrite as a0, SessionStorageInitError as a1, SessionStorageSaveError as a2, ASTRO_VERSION as a3, CspNotEnabled as a4, LocalsReassigned as a5, generateCspDigest as a6, PrerenderClientAddressNotAvailable as a7, clientAddressSymbol as a8, ClientAddressNotAvailable as a9, StaticClientAddressNotAvailable as aa, AstroResponseHeadersReassigned as ab, responseSentSymbol as ac, renderPage as ad, REWRITE_DIRECTIVE_HEADER_KEY as ae, REWRITE_DIRECTIVE_HEADER_VALUE as af, renderEndpoint as ag, LocalsNotAnObject as ah, REROUTABLE_STATUS_CODES as ai, nodeRequestAbortControllerCleanupSymbol as aj, NOOP_MIDDLEWARE_HEADER as ak, REDIRECT_STATUS_CODES as al, ActionsReturnedInvalidDataError as am, MissingSharp as an, ExpectedImageOptions as b, ExpectedNotESMImage as c, InvalidImageService as d, createComponent as e, createAstro as f, ImageMissingAlt as g, addAttribute as h, ExperimentalFontsNotEnabled as i, FontFamilyNotFound as j, renderScript as k, renderHead as l, maybeRenderHead as m, renderComponent as n, renderSlot as o, decodeKey as p, decryptString as q, renderTemplate as r, spreadAttributes as s, toStyleString as t, unescapeHTML as u, createSlotValueFromString as v, isAstroComponentFactory as w, REROUTE_DIRECTIVE_HEADER as x, i18nNoLocaleFoundInPath as y, ResponseSentError as z };
+export { isRenderInstruction as $, AstroError as A, ActionNotFoundError as B, MiddlewareNoDataOrNextCalled as C, MiddlewareNotAResponse as D, ExpectedImage as E, FailedToFetchRemoteImageDimensions as F, originPathnameSymbol as G, RewriteWithBodyUsed as H, IncompatibleDescriptorOptions as I, GetStaticPathsRequired as J, InvalidGetStaticPathsReturn as K, LocalImageUsedWrongly as L, MissingImageDimension as M, NoImageMetadata as N, InvalidGetStaticPathsEntry as O, GetStaticPathsExpectedParams as P, GetStaticPathsInvalidRouteParam as Q, ROUTE_TYPE_HEADER as R, PageNumberParamNotFound as S, DEFAULT_404_COMPONENT as T, UnsupportedImageFormat as U, NoMatchingStaticPathFound as V, PrerenderDynamicEndpointPathCollide as W, ReservedSlotName as X, renderSlotToString as Y, renderJSX as Z, chunkToString as _, UnsupportedImageConversion as a, ForbiddenRewrite as a0, SessionStorageInitError as a1, SessionStorageSaveError as a2, ASTRO_VERSION as a3, CspNotEnabled as a4, LocalsReassigned as a5, generateCspDigest as a6, PrerenderClientAddressNotAvailable as a7, clientAddressSymbol as a8, ClientAddressNotAvailable as a9, StaticClientAddressNotAvailable as aa, AstroResponseHeadersReassigned as ab, responseSentSymbol as ac, renderPage as ad, REWRITE_DIRECTIVE_HEADER_KEY as ae, REWRITE_DIRECTIVE_HEADER_VALUE as af, renderEndpoint as ag, LocalsNotAnObject as ah, FailedToFindPageMapSSR as ai, REROUTABLE_STATUS_CODES as aj, nodeRequestAbortControllerCleanupSymbol as ak, NOOP_MIDDLEWARE_HEADER as al, REDIRECT_STATUS_CODES as am, ActionsReturnedInvalidDataError as an, MissingSharp as ao, ExpectedImageOptions as b, ExpectedNotESMImage as c, InvalidImageService as d, createComponent as e, createAstro as f, ImageMissingAlt as g, addAttribute as h, ExperimentalFontsNotEnabled as i, FontFamilyNotFound as j, renderScript as k, renderHead as l, maybeRenderHead as m, renderComponent as n, renderSlot as o, decodeKey as p, decryptString as q, renderTemplate as r, spreadAttributes as s, toStyleString as t, unescapeHTML as u, createSlotValueFromString as v, isAstroComponentFactory as w, REROUTE_DIRECTIVE_HEADER as x, i18nNoLocaleFoundInPath as y, ResponseSentError as z };

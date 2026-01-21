@@ -1,14 +1,15 @@
 ---
 export const prerender = false; // necesario para rutas dinámicas
+
 import { EventosId } from "../../components/react/eventosId";
 import "../../styles/global.css";
 
-// Solo usamos Astro.params dentro del frontmatter
+// Obtener el ID del evento de la URL
 const { id } = Astro.params;
 if (!id) throw new Error("Evento no encontrado");
 ---
 
-<section class="bg-gray-950 min-h-screen">
-  <!-- Pasamos id al componente React -->
-  <EventosId id={id} client:load />
+<section class="bg-gray-950 min-h-screen p-8">
+  <!-- client:only asegura que React solo se renderiza en navegador -->
+  <EventosId id={id} client:only="react" />
 </section>
