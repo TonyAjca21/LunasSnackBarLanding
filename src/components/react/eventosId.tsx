@@ -13,14 +13,23 @@ interface Props {
   onBack?: () => void;
 }
 
-export  function EventosId({ id }: Props) {
+export function EventosId() {
+  const [id, setId] = useState<string | null>(null);
   const [evento, setEvento] = useState<Eventos | null>(null);
 
+  // Obtener ID desde la URL
   useEffect(() => {
+    const urlId = window.location.pathname.split("/").pop();
+    setId(urlId || null);
+  }, []);
+
+  // Obtener evento desde Firebase
+  useEffect(() => {
+    if (!id) return;
+
     const fetchEvento = async () => {
       const ref = doc(db, "eventos", id);
       const snap = await getDoc(ref);
-
       if (snap.exists()) {
         setEvento({ id: snap.id, ...snap.data() } as Eventos);
       }
@@ -31,17 +40,15 @@ export  function EventosId({ id }: Props) {
 
   if (!evento) return <p>Cargando evento...</p>;
 
-   const handleWhatsAppClick = () => {
+  const handleWhatsAppClick = () => {
     const number = evento.whatsappNumber || '99268791';
     const message = encodeURIComponent(
       `Hola! Me interesa cotizar un evento similar a "${evento.nombre}"`
     );
     window.open(`https://wa.me/${number}?text=${message}`, '_blank');
   };
-    const handleBackClick = () => {
-   return window.history.back();
-  };
 
+  const handleBackClick = () => window.history.back();
 
   return (
     <div className="min-h-screen bg-linear-to-b from-[#0a0a0a] to-[#1a1a1a] text-white">
