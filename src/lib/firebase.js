@@ -9,10 +9,12 @@ const firebaseConfig = {
   projectId: "lunas-snack-bar",
   appId: "1:652966154220:web:95203befeb9947579c3ac9",
   storageBucket: "lunas-snack-bar.firebasestorage.app",
+ messagingSenderId: "652966154220",
+  appId: "1:652966154220:web:95203befeb9947579c3ac9",
 };
 
 // ✅ evita duplicar la app
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);

@@ -13,38 +13,45 @@ interface Props {
   onBack?: () => void;
 }
 
-export function EventosId({ id, onBack }: Props) {
-  const [evento, setEvento] = useState<Eventos | null>(null);
+interface Evento {
+  id: string;
+  nombre: string;
+  descripcion?: string;
+  ubicacion?: string;
+  fecha?: string;
+  fechaevento?: string;
+  invitados?: number;
+  image?: string;
+  fotos?: string[];
+  videoUrl?: string;
+  whatsappNumber?: string;
+}
 
-  // Cargar datos de Firebase solo en navegador
+export function EventosId({ id, onBack }: Props) {
+  const [evento, setEvento] = useState<Evento | null>(null);
+
+  // Solo en navegador
   useEffect(() => {
     const fetchEvento = async () => {
       try {
         const ref = doc(db, "eventos", id);
         const snap = await getDoc(ref);
-        if (snap.exists()) {
-          setEvento({ id: snap.id, ...snap.data() } as Eventos);
-        }
-      } catch (error) {
-        console.error("Error cargando evento:", error);
+        if (snap.exists()) setEvento({ id: snap.id, ...snap.data() } as Evento);
+      } catch (err) {
+        console.error("Error cargando evento:", err);
       }
     };
-
     fetchEvento();
   }, [id]);
 
   if (!evento) return <p className="text-white">Cargando evento...</p>;
 
-  // Función para abrir WhatsApp
   const handleWhatsAppClick = () => {
     const number = evento.whatsappNumber || "99268791";
-    const message = encodeURIComponent(
-      `Hola! Me interesa cotizar un evento similar a "${evento.nombre}"`
-    );
+    const message = encodeURIComponent(`Hola! Me interesa cotizar un evento similar a "${evento.nombre}"`);
     window.open(`https://wa.me/${number}?text=${message}`, "_blank");
   };
 
-  // Función para volver atrás
   const handleBackClick = () => {
     if (onBack) return onBack();
     window.history.back();
