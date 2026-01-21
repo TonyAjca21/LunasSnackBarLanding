@@ -10,5 +10,6 @@ if (!id) throw new Error("Evento no encontrado");
 
 <section class="bg-gray-950 min-h-screen">
   <!-- Pasamos id al componente React -->
-  <EventosId id={id} client:load />
+<EventosId id={id} client:only="react" />
+
 </section>
