@@ -10,13 +10,12 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
   },
-  output:"server",
+  output:"static",
   adapter: vercel(),
    prerender: {
     entries: [
-      '/',           // página principal
-      '/admin',      // página About
-           // página Contact
+      '/eventos/[id]',      // página About
+ 
     ],
   },
 
