@@ -1,12 +1,24 @@
 ---
-export const prerender = false; // rutas dinámicas requieren esto
 import { EventosId } from "../../components/react/eventosId.tsx";
 import "../../styles/global.css";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../lib/firebase";
 
-const { id } = Astro.params;
-if (!id) throw new Error("Evento no encontrado");
+// --- PRE-RENDER DYNAMIC PATHS ---
+export async function getStaticPaths() {
+  const eventosCollection = collection(db, "eventos");
+  const snapshot = await getDocs(eventosCollection);
+
+  const paths = snapshot.docs.map(doc => ({
+    params: { id: doc.id }
+  }));
+
+  return paths;
+}
+
+// --- RECIBE EL PARAM ID ---
+const { id } = Astro.params ?? {};
 ---
-
-<section class="bg-gray-950 ">
-  <EventosId id={id} client:only="react" />
+<section class="bg-gray-950">
+  {id ? <EventosId id={id} client:only="react" /> : <p class="text-white">Evento no encontrado</p>}
 </section>
