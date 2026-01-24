@@ -6,17 +6,11 @@ import vercel from '@astrojs/vercel';
 
 export default defineConfig({
   integrations: [react()],
-
+  output: "static",
   vite: {
     plugins: [tailwindcss()],
   },
-  output:"static",
-  adapter: vercel(),
-   prerender: {
-    entries: [
-      '/eventos/[id]',      // página About
- 
-    ],
-  },
+  
+   adapter: vercel(),
 
 });

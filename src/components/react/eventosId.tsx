@@ -9,7 +9,7 @@ import { ImageWithFallback } from "../react/ImageWithFallback.tsx";
 import { ArrowLeft } from 'lucide-react';
 
 interface Props {
-  id: string;
+  id?: string;
   onBack?: () => void;
 }
 
