@@ -1,15 +1,12 @@
 ---
-export const prerender = false; // necesario para rutas dinámicas
-
-import { EventosId } from "../../components/react/eventosId";
+export const prerender = false; // rutas dinámicas requieren esto
+import { EventosId } from "../../components/react/eventosId.tsx";
 import "../../styles/global.css";
 
-// Obtener el ID del evento de la URL
 const { id } = Astro.params;
 if (!id) throw new Error("Evento no encontrado");
 ---
 
-<section class="bg-gray-950 min-h-screen p-8">
-  <!-- client:only asegura que React solo se renderiza en navegador -->
+<section class="bg-gray-950 ">
   <EventosId id={id} client:only="react" />
 </section>
