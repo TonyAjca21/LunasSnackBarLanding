@@ -1,11 +1,11 @@
-import { doc, getDoc } from "firebase/firestore";
+
 import { useState, useEffect } from "react";
 import type { Eventos } from "../../lib/data";
-import { db } from "../../lib/firebase";
-import { div, section } from "framer-motion/client";
+
+
 import { MessageCircle } from 'lucide-react';
 import { motion } from "framer-motion";
-import {ImageWithFallback} from "../react/ImageWithFallback.tsx";
+import { ImageWithFallback } from "../react/ImageWithFallback.tsx";
 import { ArrowLeft } from 'lucide-react';
 
 interface Props {
@@ -30,25 +30,42 @@ interface Evento {
 export function EventosId({ id, onBack }: Props) {
   const [evento, setEvento] = useState<Evento | null>(null);
 
-  // Solo en navegador
+
   useEffect(() => {
+    let mounted = true;
+
     const fetchEvento = async () => {
       try {
+        const { doc, getDoc } = await import("firebase/firestore");
+        const { db } = await import("../../lib/firebase");
+
         const ref = doc(db, "eventos", id);
         const snap = await getDoc(ref);
-        if (snap.exists()) setEvento({ id: snap.id, ...snap.data() } as Evento);
+
+        if (mounted && snap.exists()) {
+          setEvento({ id: snap.id, ...snap.data() } as Evento);
+        }
       } catch (err) {
         console.error("Error cargando evento:", err);
       }
     };
+
     fetchEvento();
+    return () => {
+      mounted = false;
+    };
   }, [id]);
 
   if (!evento) return <p className="text-white">Cargando evento...</p>;
 
   const handleWhatsAppClick = () => {
-    const number = evento.whatsappNumber || "99268791";
-    const message = encodeURIComponent(`Hola! Me interesa cotizar un evento similar a "${evento.nombre}"`);
+    if (typeof window === "undefined") return;
+
+    const number = evento?.whatsappNumber || "99268791";
+    const message = encodeURIComponent(
+      `Hola! Me interesa cotizar un evento similar a "${evento?.nombre}"`
+    );
+
     window.open(`https://wa.me/${number}?text=${message}`, "_blank");
   };
 
@@ -117,7 +134,7 @@ export function EventosId({ id, onBack }: Props) {
             >
               Sobre el Evento
             </h2>
-            
+
             {/* Línea decorativa animada */}
             <motion.div
               className="w-24 h-1 bg-linear-to-r from-transparent via-white to-transparent mx-auto mb-8"
@@ -163,7 +180,7 @@ export function EventosId({ id, onBack }: Props) {
                     <p className="text-white font-medium">{evento.ubicacion}</p>
                   </motion.div>
                 )}
-                
+
                 {(evento.fecha || evento.fechaevento) && (
                   <motion.div
                     className="text-center"
@@ -175,7 +192,7 @@ export function EventosId({ id, onBack }: Props) {
                     <p className="text-white font-medium">{evento.fecha || evento.fechaevento}</p>
                   </motion.div>
                 )}
-                
+
                 {evento.invitados && (
                   <motion.div
                     className="text-center"
@@ -254,16 +271,16 @@ export function EventosId({ id, onBack }: Props) {
       )}
 
       {/* Botón de WhatsApp flotante o al final */}
-  
+
 
       {/* Botón de WhatsApp flotante (opcional, descomenta si prefieres este estilo) */}
-      { <button
+      {<button
         onClick={handleWhatsAppClick}
         className="fixed bottom-6 right-6 bg-green-600 hover:bg-green-700 text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-all duration-300 z-50"
         aria-label="Contactar por WhatsApp"
       >
         <MessageCircle className="w-6 h-6" />
-      </button> }
+      </button>}
     </div>
   );
 }

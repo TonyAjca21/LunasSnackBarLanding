@@ -1,9 +1,7 @@
 import { e as createComponent, f as createAstro, m as maybeRenderHead, n as renderComponent, r as renderTemplate } from '../../chunks/astro/server_Bk3-GWK7.mjs';
 import 'piccolore';
 import { jsx, jsxs } from 'react/jsx-runtime';
-import { doc, getDoc } from 'firebase/firestore';
 import { useState, useEffect } from 'react';
-import { d as db } from '../../chunks/firebase_Bmh8gzs-.mjs';
 import { ArrowLeft, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 /* empty css                                    */
@@ -29,21 +27,32 @@ function ImageWithFallback(props) {
 function EventosId({ id, onBack }) {
   const [evento, setEvento] = useState(null);
   useEffect(() => {
+    let mounted = true;
     const fetchEvento = async () => {
       try {
+        const { doc, getDoc } = await import('firebase/firestore');
+        const { db } = await import('../../chunks/firebase_CFmAhGEA.mjs');
         const ref = doc(db, "eventos", id);
         const snap = await getDoc(ref);
-        if (snap.exists()) setEvento({ id: snap.id, ...snap.data() });
+        if (mounted && snap.exists()) {
+          setEvento({ id: snap.id, ...snap.data() });
+        }
       } catch (err) {
         console.error("Error cargando evento:", err);
       }
     };
     fetchEvento();
+    return () => {
+      mounted = false;
+    };
   }, [id]);
   if (!evento) return /* @__PURE__ */ jsx("p", { className: "text-white", children: "Cargando evento..." });
   const handleWhatsAppClick = () => {
-    const number = evento.whatsappNumber || "99268791";
-    const message = encodeURIComponent(`Hola! Me interesa cotizar un evento similar a "${evento.nombre}"`);
+    if (typeof window === "undefined") return;
+    const number = evento?.whatsappNumber || "99268791";
+    const message = encodeURIComponent(
+      `Hola! Me interesa cotizar un evento similar a "${evento?.nombre}"`
+    );
     window.open(`https://wa.me/${number}?text=${message}`, "_blank");
   };
   const handleBackClick = () => {
