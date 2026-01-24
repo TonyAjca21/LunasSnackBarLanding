@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import type { Eventos } from "../../lib/data";
 
-
+import { doc } from "firebase/firestore";
 import { MessageCircle } from 'lucide-react';
 import { motion } from "framer-motion";
 import { ImageWithFallback } from "../react/ImageWithFallback.tsx";
@@ -27,52 +27,71 @@ interface Evento {
   whatsappNumber?: string;
 }
 
-export function EventosId({ id, onBack }: Props) {
+export function EventosId() {
   const [evento, setEvento] = useState<Evento | null>(null);
-
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
     const fetchEvento = async () => {
       try {
+        if (typeof window === "undefined") return;
+
+        const id = window.location.pathname.split("/").pop();
+        if (!id) {
+          setError("Evento no encontrado");
+          return;
+        }
+
         const { doc, getDoc } = await import("firebase/firestore");
         const { db } = await import("../../lib/firebase");
 
         const ref = doc(db, "eventos", id);
         const snap = await getDoc(ref);
 
-        if (mounted && snap.exists()) {
+        if (!snap.exists()) {
+          setError("Evento no encontrado");
+          return;
+        }
+
+        if (mounted) {
           setEvento({ id: snap.id, ...snap.data() } as Evento);
         }
       } catch (err) {
         console.error("Error cargando evento:", err);
+        setError("Error cargando el evento");
       }
     };
 
     fetchEvento();
+
     return () => {
       mounted = false;
     };
-  }, [id]);
+  }, []);
 
-  if (!evento) return <p className="text-white">Cargando evento...</p>;
+  if (error) {
+    return <p className="text-red-400">{error}</p>;
+  }
+
+  if (!evento) {
+    return <p className="text-white">Cargando evento...</p>;
+  }
 
   const handleWhatsAppClick = () => {
-    if (typeof window === "undefined") return;
-
-    const number = evento?.whatsappNumber || "99268791";
+    const number = evento.whatsappNumber || "99268791";
     const message = encodeURIComponent(
-      `Hola! Me interesa cotizar un evento similar a "${evento?.nombre}"`
+      `Hola! Me interesa cotizar un evento similar a "${evento.nombre}"`
     );
 
     window.open(`https://wa.me/${number}?text=${message}`, "_blank");
   };
 
   const handleBackClick = () => {
-    if (onBack) return onBack();
     window.history.back();
   };
+
   return (
     <div className="min-h-screen bg-linear-to-b from-[#0a0a0a] to-[#1a1a1a] text-white">
       <motion.button
