@@ -291,8 +291,7 @@ const $$id = createComponent(($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro, $$props, $$slots);
   Astro2.self = $$id;
   const { id } = Astro2.params;
-  if (!id) throw new Error("Evento no encontrado");
-  return renderTemplate`${maybeRenderHead()}<section class="bg-gray-950 "> ${renderComponent($$result, "EventosId", EventosId, { "id": id, "client:load": true, "client:component-hydration": "load", "client:component-path": "C:/Users/Tony Castro/Desktop/Proyecto/LunasSnackBarLanding/LunasSnackBarLanding/src/components/react/eventosId.tsx", "client:component-export": "EventosId" })} </section>`;
+  return renderTemplate`${maybeRenderHead()}<section class="bg-gray-950"> ${renderComponent($$result, "EventosId", EventosId, { "id": id, "client:load": true, "client:component-hydration": "load", "client:component-path": "C:/Users/Tony Castro/Desktop/Proyecto/LunasSnackBarLanding/LunasSnackBarLanding/src/components/react/eventosId.tsx", "client:component-export": "EventosId" })} </section>`;
 }, "C:/Users/Tony Castro/Desktop/Proyecto/LunasSnackBarLanding/LunasSnackBarLanding/src/pages/eventos/[id].astro", void 0);
 
 const $$file = "C:/Users/Tony Castro/Desktop/Proyecto/LunasSnackBarLanding/LunasSnackBarLanding/src/pages/eventos/[id].astro";

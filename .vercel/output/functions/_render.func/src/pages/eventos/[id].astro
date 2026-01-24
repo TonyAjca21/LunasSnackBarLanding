@@ -1,12 +1,11 @@
 ---
-export const prerender = false; // rutas dinámicas requieren esto
+export const prerender = false;
 import { EventosId } from "../../components/react/eventosId.tsx";
 import "../../styles/global.css";
 
 const { id } = Astro.params;
-if (!id) throw new Error("Evento no encontrado");
 ---
 
-<section class="bg-gray-950 ">
+<section class="bg-gray-950">
   <EventosId id={id} client:load />
 </section>
