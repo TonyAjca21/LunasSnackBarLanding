@@ -5,11 +5,13 @@ import {getDocs, collection} from "firebase/firestore";
 import { db } from "../../lib/firebase.js";
 import type { Servicios } from "../../lib/data.ts";
 import { motion } from "framer-motion";
+import { mockServicios } from "../../lib/data.ts";
 
 export function MenuProducts() {
 const [isOpen, setIsOpen] = useState(false);
 const [selectedMenu, setSelectedMenu] = useState<Servicios | null>(null);
-const [ListServicios, setlistServicios] = useState<Servicios[]>([]);
+const [ListServicios, setlistServicios] = useState<Servicios[]>([]); //firebase bd
+const [mockServiciosState, setMockServiciosState] = useState<Servicios[]>(mockServicios);
 
  useEffect(() => {
   const fetchImages = async () => {
@@ -63,7 +65,7 @@ const [ListServicios, setlistServicios] = useState<Servicios[]>([]);
 
       {/* Grid de productos */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-        {ListServicios.filter((item) => item.estado === true).map((item, index) => (
+        {mockServicios.filter((item) => item.estado === true).map((item, index) => (
           <motion.div
             key={item.id}
             className="bg-black border border-amber-500/20 rounded-lg overflow-hidden hover:border-amber-500/60 transition-all group cursor-pointer"

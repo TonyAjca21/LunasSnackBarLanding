@@ -7,11 +7,12 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../lib/firebase";
-import type { Eventos } from "../../lib/data";
+import { mockEventos, type Eventos } from "../../lib/data";
 import { useState } from "react";
 
 export function EventsGalery() {
-  const [galleryImages, setGalleryImages] = useState<Eventos[]>([]);
+  const [galleryImages, setGalleryImages] = useState<Eventos[]>([]);//firebase bd
+  const [mockEventosstate, setMockEventos] = useState<Eventos[]>(mockEventos); //mock data
   const sliderSettings = {
     dots: true,
     infinite: true,
@@ -72,7 +73,7 @@ export function EventsGalery() {
 
         <div className="max-w-7xl mx-auto gallery-slider">
           <Slider {...sliderSettings}>
-            {galleryImages.filter(image => image.estado === true).map((image, index) => (
+            {mockEventos.filter(image => image.estado === true).map((image, index) => (
               <div key={index} className="px-2">
                 <div className="relative h-80 rounded-lg overflow-hidden">
                   <a href={`/eventos/${image.id}`}>
