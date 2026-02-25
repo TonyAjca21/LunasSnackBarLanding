@@ -1,11 +1,9 @@
 ---
 export const prerender = false;
-import { EventosId } from "../../components/react/eventosId.tsx";
+import { EventosId } from "../../components/react/eventosId";
 import "../../styles/global.css";
-
-const { id } = Astro.params;
 ---
 
 <section class="bg-gray-950">
-  <EventosId id={id} client:load />
+  <EventosId client:load />
 </section>

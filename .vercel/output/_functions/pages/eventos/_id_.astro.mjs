@@ -1,7 +1,9 @@
-import { e as createComponent, f as createAstro, m as maybeRenderHead, n as renderComponent, r as renderTemplate } from '../../chunks/astro/server_Bk3-GWK7.mjs';
+import { e as createComponent, m as maybeRenderHead, n as renderComponent, r as renderTemplate } from '../../chunks/astro/server_Bk3-GWK7.mjs';
 import 'piccolore';
 import { jsx, jsxs } from 'react/jsx-runtime';
 import { useState, useEffect } from 'react';
+import { m as mockEventos } from '../../chunks/data_CM01sNvZ.mjs';
+import 'firebase/firestore';
 import { ArrowLeft, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 /* empty css                                    */
@@ -24,39 +26,24 @@ function ImageWithFallback(props) {
   ) : /* @__PURE__ */ jsx("img", { src, alt, className, style, ...rest, onError: handleError });
 }
 
-function EventosId({ id, onBack }) {
+function EventosId() {
+  const [mockeventomock, setMockEvento] = useState(mockEventos);
   const [evento, setEvento] = useState(null);
   useEffect(() => {
-    let mounted = true;
-    const fetchEvento = async () => {
-      try {
-        const { doc, getDoc } = await import('firebase/firestore');
-        const { db } = await import('../../chunks/firebase_CFmAhGEA.mjs');
-        const ref = doc(db, "eventos", id);
-        const snap = await getDoc(ref);
-        if (mounted && snap.exists()) {
-          setEvento({ id: snap.id, ...snap.data() });
-        }
-      } catch (err) {
-        console.error("Error cargando evento:", err);
-      }
-    };
-    fetchEvento();
-    return () => {
-      mounted = false;
-    };
-  }, [id]);
-  if (!evento) return /* @__PURE__ */ jsx("p", { className: "text-white", children: "Cargando evento..." });
+    const id = window.location.pathname.split("/").pop();
+    if (!id) return;
+    const eventoSeleccionado = mockeventomock.find((e) => e.id === id) || mockeventomock[0];
+    setEvento(eventoSeleccionado);
+  }, [mockeventomock]);
+  if (!evento) {
+    return /* @__PURE__ */ jsx("p", { className: "text-white", children: "Cargando evento..." });
+  }
   const handleWhatsAppClick = () => {
-    if (typeof window === "undefined") return;
-    const number = evento?.whatsappNumber || "99268791";
-    const message = encodeURIComponent(
-      `Hola! Me interesa cotizar un evento similar a "${evento?.nombre}"`
-    );
+    const number = evento.whatsappNumber || "99268791";
+    const message = encodeURIComponent(`Hola! Me interesa cotizar un evento similar a "${evento.nombre}"`);
     window.open(`https://wa.me/${number}?text=${message}`, "_blank");
   };
   const handleBackClick = () => {
-    if (onBack) return onBack();
     window.history.back();
   };
   return /* @__PURE__ */ jsxs("div", { className: "min-h-screen bg-linear-to-b from-[#0a0a0a] to-[#1a1a1a] text-white", children: [
@@ -86,14 +73,7 @@ function EventosId({ id, onBack }) {
         }
       ),
       /* @__PURE__ */ jsxs("div", { className: "absolute inset-0 bg-black/50 flex flex-col justify-center items-center text-center px-4", children: [
-        /* @__PURE__ */ jsx(
-          "h1",
-          {
-            className: "text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2",
-            style: { fontFamily: "Crimson Text, serif" },
-            children: evento.nombre
-          }
-        ),
+        /* @__PURE__ */ jsx("h1", { className: "text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2", style: { fontFamily: "Crimson Text, serif" }, children: evento.nombre }),
         /* @__PURE__ */ jsxs("p", { className: "text-white text-sm md:text-base mb-2 flex items-center gap-2", children: [
           "📍 ",
           evento.ubicacion,
@@ -108,112 +88,72 @@ function EventosId({ id, onBack }) {
         !evento.invitados && evento.descripcion && /* @__PURE__ */ jsx("p", { className: "text-white text-xs md:text-sm max-w-2xl", children: evento.descripcion })
       ] })
     ] }),
-    evento.descripcion && /* @__PURE__ */ jsx("section", { className: "py-16 px-4 md:px-8 max-w-4xl mx-auto", children: /* @__PURE__ */ jsxs(
-      motion.div,
-      {
-        initial: { opacity: 0, y: 50 },
-        whileInView: { opacity: 1, y: 0 },
-        viewport: { once: true, amount: 0.3 },
-        transition: { duration: 0.8, ease: "easeOut" },
-        children: [
-          /* @__PURE__ */ jsx(
-            "h2",
-            {
-              className: "text-3xl md:text-4xl text-center mb-6",
-              style: { fontFamily: "Crimson Text, serif" },
-              children: "Sobre el Evento"
-            }
-          ),
-          /* @__PURE__ */ jsx(
-            motion.div,
-            {
-              className: "w-24 h-1 bg-linear-to-r from-transparent via-white to-transparent mx-auto mb-8",
-              initial: { scaleX: 0 },
-              whileInView: { scaleX: 1 },
-              viewport: { once: true },
-              transition: { duration: 1, delay: 0.3 }
-            }
-          ),
-          /* @__PURE__ */ jsxs(
-            motion.div,
-            {
-              className: "bg-white/5 backdrop-blur-sm rounded-2xl p-8 md:p-12 border border-white/10 shadow-2xl",
-              initial: { opacity: 0, scale: 0.95 },
-              whileInView: { opacity: 1, scale: 1 },
-              viewport: { once: true },
-              transition: { duration: 0.6, delay: 0.2 },
-              children: [
-                /* @__PURE__ */ jsx(
-                  motion.p,
-                  {
-                    className: "text-gray-300 text-base md:text-lg leading-relaxed text-center",
-                    initial: { opacity: 0 },
-                    whileInView: { opacity: 1 },
-                    viewport: { once: true },
-                    transition: { duration: 0.8, delay: 0.4 },
-                    children: evento.descripcion
-                  }
-                ),
-                /* @__PURE__ */ jsxs(
-                  motion.div,
-                  {
-                    className: "grid grid-cols-1 md:grid-cols-3 gap-6 mt-10",
-                    initial: { opacity: 0, y: 20 },
-                    whileInView: { opacity: 1, y: 0 },
-                    viewport: { once: true },
-                    transition: { duration: 0.6, delay: 0.6 },
-                    children: [
-                      evento.ubicacion && /* @__PURE__ */ jsxs(
-                        motion.div,
-                        {
-                          className: "text-center",
-                          whileHover: { scale: 1.05 },
-                          transition: { type: "spring", stiffness: 300 },
-                          children: [
-                            /* @__PURE__ */ jsx("div", { className: "text-4xl mb-2", children: "📍" }),
-                            /* @__PURE__ */ jsx("p", { className: "text-sm text-gray-400 mb-1", children: "Ubicación" }),
-                            /* @__PURE__ */ jsx("p", { className: "text-white font-medium", children: evento.ubicacion })
-                          ]
-                        }
-                      ),
-                      (evento.fecha || evento.fechaevento) && /* @__PURE__ */ jsxs(
-                        motion.div,
-                        {
-                          className: "text-center",
-                          whileHover: { scale: 1.05 },
-                          transition: { type: "spring", stiffness: 300 },
-                          children: [
-                            /* @__PURE__ */ jsx("div", { className: "text-4xl mb-2", children: "📅" }),
-                            /* @__PURE__ */ jsx("p", { className: "text-sm text-gray-400 mb-1", children: "Fecha" }),
-                            /* @__PURE__ */ jsx("p", { className: "text-white font-medium", children: evento.fecha || evento.fechaevento })
-                          ]
-                        }
-                      ),
-                      evento.invitados && /* @__PURE__ */ jsxs(
-                        motion.div,
-                        {
-                          className: "text-center",
-                          whileHover: { scale: 1.05 },
-                          transition: { type: "spring", stiffness: 300 },
-                          children: [
-                            /* @__PURE__ */ jsx("div", { className: "text-4xl mb-2", children: "👥" }),
-                            /* @__PURE__ */ jsx("p", { className: "text-sm text-gray-400 mb-1", children: "Invitados" }),
-                            /* @__PURE__ */ jsxs("p", { className: "text-white font-medium", children: [
-                              evento.invitados,
-                              " personas"
-                            ] })
-                          ]
-                        }
-                      )
-                    ]
-                  }
-                )
-              ]
-            }
-          )
-        ]
-      }
-    ) }),
+    evento.descripcion && /* @__PURE__ */ jsx("section", { className: "py-16 px-4 md:px-8 max-w-4xl mx-auto", children: /* @__PURE__ */ jsxs(motion.div, { initial: { opacity: 0, y: 50 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, amount: 0.3 }, transition: { duration: 0.8, ease: "easeOut" }, children: [
+      /* @__PURE__ */ jsx("h2", { className: "text-3xl md:text-4xl text-center mb-6", style: { fontFamily: "Crimson Text, serif" }, children: "Sobre el Evento" }),
+      /* @__PURE__ */ jsx(
+        motion.div,
+        {
+          className: "w-24 h-1 bg-linear-to-r from-transparent via-white to-transparent mx-auto mb-8",
+          initial: { scaleX: 0 },
+          whileInView: { scaleX: 1 },
+          viewport: { once: true },
+          transition: { duration: 1, delay: 0.3 }
+        }
+      ),
+      /* @__PURE__ */ jsxs(
+        motion.div,
+        {
+          className: "bg-white/5 backdrop-blur-sm rounded-2xl p-8 md:p-12 border border-white/10 shadow-2xl",
+          initial: { opacity: 0, scale: 0.95 },
+          whileInView: { opacity: 1, scale: 1 },
+          viewport: { once: true },
+          transition: { duration: 0.6, delay: 0.2 },
+          children: [
+            /* @__PURE__ */ jsx(
+              motion.p,
+              {
+                className: "text-gray-300 text-base md:text-lg leading-relaxed text-center",
+                initial: { opacity: 0 },
+                whileInView: { opacity: 1 },
+                viewport: { once: true },
+                transition: { duration: 0.8, delay: 0.4 },
+                children: evento.descripcion
+              }
+            ),
+            /* @__PURE__ */ jsxs(
+              motion.div,
+              {
+                className: "grid grid-cols-1 md:grid-cols-3 gap-6 mt-10",
+                initial: { opacity: 0, y: 20 },
+                whileInView: { opacity: 1, y: 0 },
+                viewport: { once: true },
+                transition: { duration: 0.6, delay: 0.6 },
+                children: [
+                  evento.ubicacion && /* @__PURE__ */ jsxs("div", { className: "text-center", children: [
+                    /* @__PURE__ */ jsx("div", { className: "text-4xl mb-2", children: "📍" }),
+                    /* @__PURE__ */ jsx("p", { className: "text-sm text-gray-400 mb-1", children: "Ubicación" }),
+                    /* @__PURE__ */ jsx("p", { className: "text-white font-medium", children: evento.ubicacion })
+                  ] }),
+                  (evento.fecha || evento.fechaevento) && /* @__PURE__ */ jsxs("div", { className: "text-center", children: [
+                    /* @__PURE__ */ jsx("div", { className: "text-4xl mb-2", children: "📅" }),
+                    /* @__PURE__ */ jsx("p", { className: "text-sm text-gray-400 mb-1", children: "Fecha" }),
+                    /* @__PURE__ */ jsx("p", { className: "text-white font-medium", children: evento.fecha || evento.fechaevento })
+                  ] }),
+                  evento.invitados && /* @__PURE__ */ jsxs("div", { className: "text-center", children: [
+                    /* @__PURE__ */ jsx("div", { className: "text-4xl mb-2", children: "👥" }),
+                    /* @__PURE__ */ jsx("p", { className: "text-sm text-gray-400 mb-1", children: "Invitados" }),
+                    /* @__PURE__ */ jsxs("p", { className: "text-white font-medium", children: [
+                      evento.invitados,
+                      " personas"
+                    ] })
+                  ] })
+                ]
+              }
+            )
+          ]
+        }
+      )
+    ] }) }),
     evento.fotos && evento.fotos.length > 0 && /* @__PURE__ */ jsxs("section", { className: "py-12 px-4 md:px-8 max-w-7xl mx-auto", children: [
       /* @__PURE__ */ jsx(
         motion.h2,
@@ -252,26 +192,11 @@ function EventosId({ id, onBack }) {
       )) })
     ] }),
     evento.videoUrl && /* @__PURE__ */ jsxs("section", { className: "py-12 px-4 md:px-8 max-w-5xl mx-auto", children: [
-      /* @__PURE__ */ jsx(
-        "h2",
-        {
-          className: "text-2xl md:text-3xl text-center mb-8",
-          style: { fontFamily: "Crimson Text, serif" },
-          children: "Así se vivió este evento 🎉"
-        }
-      ),
-      /* @__PURE__ */ jsx("div", { className: "relative aspect-video rounded-2xl overflow-hidden bg-black shadow-2xl", children: /* @__PURE__ */ jsxs(
-        "video",
-        {
-          controls: true,
-          className: "w-full h-full",
-          poster: evento.image,
-          children: [
-            /* @__PURE__ */ jsx("source", { src: evento.videoUrl, type: "video/mp4" }),
-            "Tu navegador no soporta el elemento de video."
-          ]
-        }
-      ) })
+      /* @__PURE__ */ jsx("h2", { className: "text-2xl md:text-3xl text-center mb-8", style: { fontFamily: "Crimson Text, serif" }, children: "Así se vivió este evento 🎉" }),
+      /* @__PURE__ */ jsx("div", { className: "relative aspect-video rounded-2xl overflow-hidden bg-black shadow-2xl", children: /* @__PURE__ */ jsxs("video", { controls: true, className: "w-full h-full", poster: evento.image, children: [
+        /* @__PURE__ */ jsx("source", { src: evento.videoUrl, type: "video/mp4" }),
+        "Tu navegador no soporta el elemento de video."
+      ] }) })
     ] }),
     /* @__PURE__ */ jsx(
       "button",
@@ -285,13 +210,9 @@ function EventosId({ id, onBack }) {
   ] });
 }
 
-const $$Astro = createAstro();
 const prerender = false;
 const $$id = createComponent(($$result, $$props, $$slots) => {
-  const Astro2 = $$result.createAstro($$Astro, $$props, $$slots);
-  Astro2.self = $$id;
-  const { id } = Astro2.params;
-  return renderTemplate`${maybeRenderHead()}<section class="bg-gray-950"> ${renderComponent($$result, "EventosId", EventosId, { "id": id, "client:load": true, "client:component-hydration": "load", "client:component-path": "C:/Users/Tony Castro/Desktop/Proyecto/LunasSnackBarLanding/LunasSnackBarLanding/src/components/react/eventosId.tsx", "client:component-export": "EventosId" })} </section>`;
+  return renderTemplate`${maybeRenderHead()}<section class="bg-gray-950"> ${renderComponent($$result, "EventosId", EventosId, { "client:load": true, "client:component-hydration": "load", "client:component-path": "C:/Users/Tony Castro/Desktop/Proyecto/LunasSnackBarLanding/LunasSnackBarLanding/src/components/react/eventosId", "client:component-export": "EventosId" })} </section>`;
 }, "C:/Users/Tony Castro/Desktop/Proyecto/LunasSnackBarLanding/LunasSnackBarLanding/src/pages/eventos/[id].astro", void 0);
 
 const $$file = "C:/Users/Tony Castro/Desktop/Proyecto/LunasSnackBarLanding/LunasSnackBarLanding/src/pages/eventos/[id].astro";
