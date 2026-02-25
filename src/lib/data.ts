@@ -97,7 +97,7 @@ export const mockServicios: Servicios[] = [
   },
   {
     id: 'srv-002',
-    image: 'https://images.pexels.com/photos/857869/pexels-photo-857869.jpeg', // Mesa y vajilla de evento :contentReference[oaicite:2]{index=2}
+    image: 'https://images.pexels.com/photos/769289/pexels-photo-769289.jpeg', // Mesa y vajilla de evento :contentReference[oaicite:2]{index=2}
     imagePath: 'services/srv-002-decoracion.jpg',
     name: 'Decoración de Eventos',
     descriptionProduct: 'Decoración temática y ambientación para bodas y fiestas especiales.',
@@ -110,7 +110,7 @@ export const mockServicios: Servicios[] = [
   },
   {
     id: 'srv-003',
-    image: 'https://images.pexels.com/photos/414647/pexels-photo-414647.jpeg', // Chef preparando catering :contentReference[oaicite:3]{index=3}
+    image: 'https://images.pexels.com/photos/857869/pexels-photo-857869.jpeg', // Chef preparando catering :contentReference[oaicite:3]{index=3}
     imagePath: 'services/srv-003-fotografia.jpg',
     name: 'Fotografía Profesional',
     descriptionProduct: 'Cobertura fotográfica del evento y entrega de imágenes editadas.',
